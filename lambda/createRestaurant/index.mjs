@@ -3,10 +3,10 @@ import mysql from 'mysql';
 export const handler = async (event) => {
   // Get credentials from the DB access layer (loaded separately via AWS console)
   var pool = mysql.createPool({
-    host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",  // replace with your MySQL host
-    user: "admin",                     // replace with your DB username
-    password: "chuvietha11204",                 // replace with your DB password
-    database: "res_manager"                // replace with your database name
+    host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",
+    user: "admin",
+    password: "chuvietha11204",
+    database: "res_manager"
   });
 
   // Function to create a new restaurant
