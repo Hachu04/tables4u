@@ -4,56 +4,92 @@ export const handler = async (event) => {
   
   // get credentials from the db_access layer (loaded separately via AWS console)
   var pool = mysql.createPool({
-      host: "calculatordb.chlxnoru1n0z.us-east-1.rds.amazonaws.com",
-      user: "calcAdmin",
-      password: "calc:pass",
-      database: "calc"
+      host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",
+      user: "admin",
+      password: "chuvietha11204",
+      database: "res_manager"
   })
   
-  let CountConstants = () => {
+  // Function to create a new restaurant
+  let CreateRestaurant = (name, address) => {
     return new Promise((resolve, reject) => {
-        pool.query("SELECT COUNT(*) AS `num` FROM Constants;", [], (error, value) => {
-            if (error) { return reject(error); }
-            // turns into array containing single value [ { num: 13 } ]
-            let output = JSON.parse(JSON.stringify(value))
-            
-            // return first entry and grab its 'num' attribute
-            return resolve(output[0].num);
-        })
-    })
-}
+      pool.query(
+        "INSERT INTO Restaurant (name, address) VALUES (?, ?);", 
+        [name, address], 
+        (error, rows) => {
+          if (error) { 
+            return reject(error); 
+          }
+          return resolve(rows);
+        }
+      );
+    });
+  };
 
-  let CreateConstant = (name, value) => {
-      return new Promise((resolve, reject) => {
-          pool.query("INSERT INTO Constants (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=?;", [name, value, value], (error, rows) => {
-              if (error) { return reject(error); }
-              return resolve(rows);
-          })
-      })
+  // Function to create a new restaurant manager
+  let CreateRestaurantManager = (email, password, restaurantName) => {
+    return new Promise((resolve, reject) => {
+      pool.query(
+        "INSERT INTO RestaurantManager (email, password, ownedRestaurant) VALUES (?, ?, ?);", 
+        [email, password, restaurantName], 
+        (error, rows) => {
+          if (error) { 
+            return reject(error); 
+          }
+          return resolve(rows);
+        }
+      );
+    });
+  };
+
+  // Extract the necessary fields from the event
+  const { name, address, email, password } = event; // Assume event contains restaurant and manager details
+
+  if (!name || !address || !email || !password) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: 'Missing required fields: name, address, email, or password'
+      }),
+    };
   }
 
-  const numbers = await CountConstants()
+  // Insert the new restaurant and manager into the database
   let response;
-  if (numbers > 30) {
-     response = {
-      statusCode: 400,
-      error: "Too many constants defined."
-    }
-  } else {
+  try {
+    // Create the restaurant
+    await CreateRestaurant(name, address);
 
-      // NOTE: what if fails?
-      const all_result = await CreateConstant(event.name, event.value)
-      
-      response = {
-        statusCode: 200,
-        result: {
-          "name" : event.name,
-          "value" : event.value
+    // Create the restaurant manager and link to the restaurant
+    await CreateRestaurantManager(email, password, name);
+
+    // Return success response
+    response = {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: 'Restaurant and Restaurant Manager created successfully',
+        restaurant: {
+          name: name,
+          address: address
+        },
+        manager: {
+          email: email
         }
-      }
-    }
-  
-  pool.end()     // close DB connections
+      }),
+    };
+  } catch (error) {
+    // Handle any database errors
+    response = {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: 'Failed to create restaurant and manager',
+        error: error.message
+      }),
+    };
+  }
+
+  // Close the DB connections
+  pool.end();
 
   return response;
 }
