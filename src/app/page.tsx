@@ -1,5 +1,6 @@
 'use client'
 import React from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -26,9 +27,12 @@ export default function Home() {
 
         {/* Bottom Buttons */}
         <div className="flex flex-col gap-4">
+        <Link href="/createRestaurant">
           <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
             Create New Restaurant
           </button>
+        </Link>
+          
           <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
             Go to Consumer Dashboard
           </button>

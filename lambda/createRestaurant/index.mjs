@@ -1,15 +1,14 @@
-import mysql from 'mysql'
+import mysql from 'mysql';
 
 export const handler = async (event) => {
-  
-  // get credentials from the db_access layer (loaded separately via AWS console)
+  // Get credentials from the DB access layer (loaded separately via AWS console)
   var pool = mysql.createPool({
-      host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",
-      user: "admin",
-      password: "chuvietha11204",
-      database: "res_manager"
-  })
-  
+    host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",  // replace with your MySQL host
+    user: "admin",                     // replace with your DB username
+    password: "chuvietha11204",                 // replace with your DB password
+    database: "res_manager"                // replace with your database name
+  });
+
   // Function to create a new restaurant
   let CreateRestaurant = (name, address) => {
     return new Promise((resolve, reject) => {
@@ -54,6 +53,17 @@ export const handler = async (event) => {
     };
   }
 
+  const isWhitespace = str => !str.replace(/\s/g, '').length
+
+  if (isWhitespace(name) || isWhitespace(address) || isWhitespace(email) || isWhitespace(password)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: 'These fields contain only whitespace: name, address, email, or password'
+      }),
+    };
+  }
+
   // Insert the new restaurant and manager into the database
   let response;
   try {
@@ -92,5 +102,4 @@ export const handler = async (event) => {
   pool.end();
 
   return response;
-}
-
+};
