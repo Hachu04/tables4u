@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import { hashPassword } from '../utils/auth';
 
 // API instance for making requests
 const instance = axios.create({
@@ -23,11 +24,19 @@ export default function CreateRestaurantPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    const plainPassword = restaurantPassword;
+    let hashedPassword
+    try {
+      hashedPassword = await hashPassword(plainPassword);
+    } catch (error) {
+      console.error("Error hashing password:", error);
+    }
+
     const restaurantData = {
       name: restaurantName,
       address: restaurantAddress,
       email: restaurantEmail,
-      password: restaurantPassword,
+      password: hashedPassword,
     };
 
     try {
@@ -77,7 +86,7 @@ export default function CreateRestaurantPage() {
 
       {/* Heading */}
       <h1 className="text-2xl md:text-4xl font-bold text-center mb-8">Create New Restaurant</h1>
-      
+
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
         {/* Form Fields */}
         <div className="flex flex-col">
@@ -91,7 +100,7 @@ export default function CreateRestaurantPage() {
             required
           />
         </div>
-        
+
         <div className="flex flex-col">
           <label htmlFor="address" className="text-lg font-semibold">Address</label>
           <input
@@ -145,8 +154,8 @@ export default function CreateRestaurantPage() {
           <Link href="/">
             <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
               &larr; Return to Landing Page
-          </button>
-        </Link>
+            </button>
+          </Link>
         </div>
       ) : errorMessage ? (
         <div className="mt-8 p-4 border rounded bg-red-50">
