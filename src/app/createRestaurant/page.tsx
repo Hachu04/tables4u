@@ -1,11 +1,11 @@
-'use client';
+'use client'
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 
 // API instance for making requests
 const instance = axios.create({
-  baseURL: 'https://vqh08ym9ml.execute-api.us-east-2.amazonaws.com/Initial/', // Replace with your API base URL
+  baseURL: 'https://vqh08ym9ml.execute-api.us-east-2.amazonaws.com/Initial/',
 });
 
 export default function CreateRestaurantPage() {
@@ -34,21 +34,24 @@ export default function CreateRestaurantPage() {
       // Make API call to create the restaurant
       const response = await instance.post('createRestaurant', restaurantData);
 
-      // Handle successful response
-      if (response.status === 200 && response.data) {
+      const { statusCode, body } = response.data;
+
+      if (statusCode === 200) {
+        const parsedBody = JSON.parse(body); // Parse the response body
         setResponseDetails({
-          restaurant: response.data.restaurant,
-          manager: response.data.manager,
+          restaurant: parsedBody.restaurant,
+          manager: parsedBody.manager,
         });
-        setErrorMessage(''); // Clear any previous error messages
-        // Clear form fields
+        setErrorMessage('');
         setRestaurantName('');
         setRestaurantAddress('');
         setRestaurantEmail('');
         setRestaurantPassword('');
+      } else {
+        const parsedBody = JSON.parse(body);
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
       }
     } catch (error) {
-      // Handle error response
       if (axios.isAxiosError(error) && error.response) {
         const errorData = error.response.data;
         setErrorMessage(
@@ -61,11 +64,22 @@ export default function CreateRestaurantPage() {
     }
   };
 
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center py-8">
+      {/* Return Button */}
+      <div className="absolute top-4 left-4">
+        <Link href="/">
+          <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+            &larr; Return to Landing Page
+          </button>
+        </Link>
+      </div>
+
+      {/* Heading */}
       <h1 className="text-2xl md:text-4xl font-bold text-center mb-8">Create New Restaurant</h1>
+      
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
+        {/* Form Fields */}
         <div className="flex flex-col">
           <label htmlFor="name" className="text-lg font-semibold">Restaurant Name</label>
           <input
@@ -129,12 +143,10 @@ export default function CreateRestaurantPage() {
           <p><strong>Restaurant Address:</strong> {responseDetails.restaurant?.address}</p>
           <p><strong>Manager Email:</strong> {responseDetails.manager?.email}</p>
           <Link href="/">
-            <div className="flex justify-center mt-4">
-              <button type="submit" className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-                Return to Landing Page
-              </button>
-            </div>
-          </Link>
+            <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+              &larr; Return to Landing Page
+          </button>
+        </Link>
         </div>
       ) : errorMessage ? (
         <div className="mt-8 p-4 border rounded bg-red-50">
