@@ -15,9 +15,11 @@ export default function Home() {
         {/* Admin Column */}
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold text-center mb-4">Admin</h2>
+          <Link href="/adminLogin">
           <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
             Admin Login
           </button>
+          </Link>
         </div>
 
         {/* Restaurant Column */}
