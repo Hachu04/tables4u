@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { hashPassword } from '../utils/auth';
 
 // API instance for making requests
 const instance = axios.create({
@@ -21,57 +20,49 @@ export default function CreateRestaurantPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Handle form submission
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    const plainPassword = restaurantPassword;
-    let hashedPassword
-    try {
-      hashedPassword = await hashPassword(plainPassword);
-    } catch (error) {
-      console.error("Error hashing password:", error);
-    }
-
+  
     const restaurantData = {
       name: restaurantName,
       address: restaurantAddress,
       email: restaurantEmail,
-      password: hashedPassword,
+      password: restaurantPassword,
     };
-
-    try {
-      // Make API call to create the restaurant
-      const response = await instance.post('createRestaurant', restaurantData);
-
-      const { statusCode, body } = response.data;
-
-      if (statusCode === 200) {
-        const parsedBody = JSON.parse(body); // Parse the response body
-        setResponseDetails({
-          restaurant: parsedBody.restaurant,
-          manager: parsedBody.manager,
-        });
-        setErrorMessage('');
-        setRestaurantName('');
-        setRestaurantAddress('');
-        setRestaurantEmail('');
-        setRestaurantPassword('');
-      } else {
-        const parsedBody = JSON.parse(body);
-        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorData = error.response.data;
-        setErrorMessage(
-          errorData.message || 'Failed to create restaurant and manager.'
-        );
-      } else {
-        setErrorMessage('An unexpected error occurred.');
-      }
-      setResponseDetails(null);
-    }
+  
+    // Make API call to create the restaurant
+    instance.post('createRestaurant', restaurantData)
+      .then(function (response) {
+        const { statusCode, body } = response.data;
+  
+        if (statusCode === 200) {
+          const parsedBody = JSON.parse(body); // Parse the response body
+          setResponseDetails({
+            restaurant: parsedBody.restaurant,
+            manager: parsedBody.manager,
+          });
+          setErrorMessage('');
+          // Reset the input fields
+          setRestaurantName('');
+          setRestaurantAddress('');
+          setRestaurantEmail('');
+          setRestaurantPassword('');
+        } else {
+          const parsedBody = JSON.parse(body);
+          setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+        }
+      })
+      .catch(function (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorData = error.response.data;
+          setErrorMessage(errorData.message || 'Failed to create restaurant and manager.');
+        } else {
+          setErrorMessage('An unexpected error occurred.');
+        }
+        setResponseDetails(null);
+      });
   };
+  
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center py-8">

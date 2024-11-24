@@ -1,4 +1,5 @@
 import mysql from 'mysql';
+import bcrypt from 'bcryptjs';
 
 export const handler = async (event) => {
   // Get credentials from the DB access layer (loaded separately via AWS console)
@@ -13,11 +14,11 @@ export const handler = async (event) => {
   let CreateRestaurant = (name, address) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        "INSERT INTO Restaurant (name, address) VALUES (?, ?);", 
-        [name, address], 
+        "INSERT INTO Restaurant (name, address) VALUES (?, ?);",
+        [name, address],
         (error, rows) => {
-          if (error) { 
-            return reject(error); 
+          if (error) {
+            return reject(error);
           }
           return resolve(rows);
         }
@@ -29,11 +30,11 @@ export const handler = async (event) => {
   let CreateRestaurantManager = (email, password, restaurantName) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        "INSERT INTO RestaurantManager (email, password, ownedRestaurant) VALUES (?, ?, ?);", 
-        [email, password, restaurantName], 
+        "INSERT INTO RestaurantManager (email, password, ownedRestaurant) VALUES (?, ?, ?);",
+        [email, password, restaurantName],
         (error, rows) => {
-          if (error) { 
-            return reject(error); 
+          if (error) {
+            return reject(error);
           }
           return resolve(rows);
         }
@@ -42,13 +43,13 @@ export const handler = async (event) => {
   };
 
   // Extract the necessary fields from the event
-  const { name, address, email, password } = event; // Assume event contains restaurant and manager details
+  const { name, address, email, password } = event;
 
   if (!name || !address || !email || !password) {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        message: 'Missing required fields: name, address, email, or password'
+        error: 'Missing required fields: name, address, email, or password'
       }),
     };
   }
@@ -59,10 +60,12 @@ export const handler = async (event) => {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        message: 'These fields contain only whitespace: name, address, email, or password'
+        error: 'These fields contain only whitespace: name, address, email, or password'
       }),
     };
   }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   // Insert the new restaurant and manager into the database
   let response;
@@ -71,7 +74,7 @@ export const handler = async (event) => {
     await CreateRestaurant(name, address);
 
     // Create the restaurant manager and link to the restaurant
-    await CreateRestaurantManager(email, password, name);
+    await CreateRestaurantManager(email, hashedPassword, name);
 
     // Return success response
     response = {
@@ -88,14 +91,23 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
-    // Handle any database errors
-    response = {
-      statusCode: 400,
-      body: JSON.stringify({
-        message: 'Failed to create restaurant and manager',
-        error: error.message
-      }),
-    };
+    if (error.code === 'ER_DUP_ENTRY') {
+      response = {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Restaurant already exists',
+        }),
+      }
+    } else {
+      response = {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: error.message,
+        }),
+      };
+    }
+
+
   }
 
   // Close the DB connections
