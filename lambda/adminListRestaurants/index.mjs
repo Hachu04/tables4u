@@ -7,7 +7,7 @@ export const handler = async (event) => {
     host: "calcdb.cxcsos8q8549.us-east-2.rds.amazonaws.com",
     user: "admin",
     password: "chuvietha11204",
-    database: "calc"
+    database: "res_manager"
   })
 
   let listRestaurants = () => {
@@ -19,7 +19,7 @@ export const handler = async (event) => {
     })
 }
 
-const restaurant = await listRestaurants()
+const all_restaurant = await listRestaurants()
 
 const response = {
   statusCode: 200,
