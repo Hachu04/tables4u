@@ -10,6 +10,7 @@ const instance = axios.create({
 
 export default function RestaurantManagerDashboard() {
   const [showEditPopup, setShowEditPopup] = useState(false);
+  const [showEditTablePopup, setShowEditTablePopup] = useState(false);
   const [restaurantData, setRestaurantData] = useState({
     name: '',
     address: '',
@@ -20,8 +21,8 @@ export default function RestaurantManagerDashboard() {
   const [redraw, forceRedraw] = React.useState(0)
 
   const andRefreshDisplay = () => {
-    forceRedraw(redraw+1)
-}
+    forceRedraw(redraw + 1)
+  }
 
   useEffect(() => {
     // Fetch restaurant data on component mount
@@ -52,13 +53,21 @@ export default function RestaurantManagerDashboard() {
     fetchRestaurantData();
   }, []);
 
-  const handleEditClick = () => {
+  const handleEditRestaurantClick = () => {
     setShowEditPopup(true);
   };
 
-  const handleClosePopup = () => {
+  const handleCloseEditRestaurantPopup = () => {
     setShowEditPopup(false);
   };
+
+  const handleEditTableClick = () => {
+    setShowEditTablePopup(true);
+  }
+
+  const handleCloseEditTablePopup = () => {
+    setShowEditTablePopup(false);
+  }
 
   const handleSaveChanges = () => {
     // Save changes logic here (make API call to update the data)
@@ -116,7 +125,7 @@ export default function RestaurantManagerDashboard() {
 
         <div className="flex justify-between items-center mb-6">
           <p className="text-lg">
-            Address: {restaurantData.name}
+            Address: {restaurantData.address}
           </p>
           <p className="text-lg">
             Daily Schedule: {getOperationHour()}
@@ -128,10 +137,18 @@ export default function RestaurantManagerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Edit Restaurant Button */}
           <button
-            className="w-full bg-gray-300 text-gray-700 py-3 rounded hover:bg-gray-400 transition"
-            onClick={handleEditClick}
+            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            onClick={handleEditRestaurantClick}
           >
             Edit Restaurant
+          </button>
+
+          {/* Edit Tables Button */}
+          <button
+            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            onClick={handleEditTableClick}
+          >
+            Edit Tables
           </button>
 
           {/* Activate Restaurant Button */}
@@ -174,7 +191,7 @@ export default function RestaurantManagerDashboard() {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="address"
                   value={restaurantData.address}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
@@ -212,7 +229,7 @@ export default function RestaurantManagerDashboard() {
             <div className="flex justify-end space-x-4 mt-6">
               <button
                 className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
-                onClick={handleClosePopup}
+                onClick={handleCloseEditRestaurantPopup}
               >
                 Cancel
               </button>
