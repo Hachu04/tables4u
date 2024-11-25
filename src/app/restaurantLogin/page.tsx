@@ -28,6 +28,7 @@ export default function RestaurantLoginPage() {
       const response = await instance.post('restaurantLogin', credential);
 
       const { statusCode, body } = response.data;
+      console.log(JSON.stringify(response));
 
       if (statusCode === 200) {
         const parsedBody = JSON.parse(body); // Parse the response body
@@ -106,9 +107,9 @@ export default function RestaurantLoginPage() {
         <div className="mt-8 p-4 border rounded bg-green-50">
           <h2 className="text-xl font-semibold mb-2">Success!</h2>
           <p>{responseMsg}</p>
-          <Link href="/">
+          <Link href="/restaurantDashboard">
             <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-              &larr; Return to Landing Page
+              Go to Restaurant Manager Dashboard
             </button>
           </Link>
         </div>
