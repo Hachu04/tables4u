@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import { opendirSync } from 'fs';
+import { collectRoutesUsingEdgeRuntime } from 'next/dist/build/utils';
 
 // API instance for making requests
 const instance = axios.create({
@@ -11,13 +13,15 @@ const instance = axios.create({
 export default function RestaurantManagerDashboard() {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showEditTablePopup, setShowEditTablePopup] = useState(false);
+  const [responseMsg, setResponseMsg] = useState('')
+  const [errorMessage, setErrorMessage] = useState('');
   const [restaurantData, setRestaurantData] = useState({
     name: '',
     address: '',
+    isActive: 0,
     openingHour: '',
     closingHour: '',
   });
-  const [isActive, setIsActive] = useState(0)
   const [redraw, forceRedraw] = React.useState(0)
 
   const andRefreshDisplay = () => {
@@ -39,10 +43,10 @@ export default function RestaurantManagerDashboard() {
         setRestaurantData({
           name: parsedBody.name || '',
           address: parsedBody.address || '',
+          isActive: parsedBody.isActive || 0,
           openingHour: parsedBody.openingHour || '',
           closingHour: parsedBody.closingHour || ''
         });
-        setIsActive(parsedBody.isActive);
         andRefreshDisplay();
         console.log(JSON.stringify(response));
       } catch (error) {
@@ -69,10 +73,53 @@ export default function RestaurantManagerDashboard() {
     setShowEditTablePopup(false);
   }
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     // Save changes logic here (make API call to update the data)
     console.log('Updated data:', restaurantData);
-    setShowEditPopup(false);
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('No token found!');
+      return;
+    }
+
+    const payload = {
+      token: token,
+      name: restaurantData.name,
+      address: restaurantData.address,
+      openingHour: restaurantData.openingHour,
+      closingHour: restaurantData.closingHour
+    };
+
+    if (restaurantData.isActive === 0) {
+      try {
+        // Make API call to create the restaurant
+        const response = await instance.post('editRestaurant', payload);
+
+        const { statusCode, body } = response.data;
+        console.log(JSON.stringify(response));
+
+        if (statusCode === 200) {
+          const parsedBody = JSON.parse(body); // Parse the response body
+          setResponseMsg("Success! Restaurant information updated.");
+        } else {
+          const parsedBody = JSON.parse(body);
+          setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorData = error.response.data;
+          setErrorMessage(
+            errorData.message || 'Failed to update information.'
+          );
+        } else {
+          setErrorMessage('An unexpected error occurred.');
+        }
+        setResponseMsg('');
+      }
+    } else {
+      //active 
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +133,7 @@ export default function RestaurantManagerDashboard() {
   };
 
   const isActiveFn = () => {
-    if (isActive === 0) {
+    if (restaurantData.isActive === 0) {
       return "Inactive"
     } else {
       return "Active"
@@ -240,6 +287,27 @@ export default function RestaurantManagerDashboard() {
                 Save Changes
               </button>
             </div>
+
+            {/* Display API response message */}
+            {responseMsg ? (
+              <div className="mt-8 p-4 border rounded bg-green-50">
+                <h2 className="text-xl font-semibold mb-2">Success!</h2>
+                <p>{responseMsg}</p>
+
+                <button
+                  className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+                  onClick={handleCloseEditRestaurantPopup}
+                >
+                  Close
+                </button>
+
+              </div>
+            ) : errorMessage ? (
+              <div className="mt-8 p-4 border rounded bg-red-50">
+                <h2 className="text-xl font-semibold mb-2">Error</h2>
+                <p>{errorMessage}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
