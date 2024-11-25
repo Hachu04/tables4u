@@ -41,7 +41,7 @@ export const handler = async (event) => {
     };
   }
 
-  const { email, role } = jwt.verify(authToken, process.env.JWT_SECRET_KEY);
+  const { email, role } = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
   if (!email || !role) {
     return {
@@ -64,41 +64,42 @@ export const handler = async (event) => {
   // Insert the new restaurant and manager into the database
   let response;
   try {
-    // Create the restaurant
-    resData = await GetResInfo(email);
-
-    // Return success response
-    response = {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Restaurant and Restaurant Manager created successfully',
-        restaurant: {
-          name: name,
-          address: address
-        },
-        manager: {
-          email: email
-        }
-      }),
-    };
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
+    // Fetch restaurant data based on manager's email
+    const resData = await GetResInfo(email);
+  
+    if (!resData || resData.length === 0) {
       response = {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'Restaurant already exists',
+          error: 'No restaurant found for the given manager email',
         }),
-      }
+      };
     } else {
+      // Assuming only one restaurant is returned; if multiple, modify as needed
+      const restaurant = resData[0];
+  
+      // Return success response with restaurant data
       response = {
-        statusCode: 400,
+        statusCode: 200,
         body: JSON.stringify({
-          error: error.message,
+          name: restaurant.name,
+          address: restaurant.address,
+          isActive: restaurant.isActive,
+          openingHour: restaurant.openingHour,
+          closingHour: restaurant.closingHour,
         }),
       };
     }
-
-
+  } catch (error) {
+    console.error('Error fetching restaurant data:', error);
+  
+    response = {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'An error occurred while retrieving restaurant information',
+        details: error.message,
+      }),
+    };
   }
 
   // Close the DB connections
