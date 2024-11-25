@@ -11,11 +11,12 @@ export const handler = async (event) => {
   });
 
   // Function to create a new restaurant
-  let GetResInfo = (email) => {
+  let GetTables = (email) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        `SELECT Restaurant.*
-         FROM Restaurant
+        `SELECT Table.tableNum, Table.numSeats
+         FROM Table
+         JOIN Restaurant ON Table.resId = 
          JOIN RestaurantManager ON Restaurant.resId = RestaurantManager.ownedResId
          WHERE RestaurantManager.email = ?;`,
         [email],

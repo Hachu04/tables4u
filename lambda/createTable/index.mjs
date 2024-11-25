@@ -10,15 +10,33 @@ export const handler = async (event) => {
     database: "res_manager"
   });
 
-  // Function to create a new restaurant
-  let GetResInfo = (email) => {
+  // Function to get resId
+  let GetResId = (email) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        `SELECT Restaurant.*
+        `SELECT Restaurant.resId
          FROM Restaurant
          JOIN RestaurantManager ON Restaurant.resId = RestaurantManager.ownedResId
          WHERE RestaurantManager.email = ?;`,
         [email],
+        (error, rows) => {
+          if (error) {
+            return reject(error);
+          }
+          if (rows.length === 0) {
+            return reject(new Error('Restaurant not found.'));
+          }
+          return resolve(rows[0].resId);
+        }
+      );
+    });
+  };
+
+  let CreateTable = (tableNum, numSeats, resId) => {
+    return new Promise((resolve, reject) => {
+      pool.query(
+        "INSERT INTO ResTable (tableNum, numSeats, resId) VALUES (?, ?, ?);",
+        [tableNum, numSeats, resId],
         (error, rows) => {
           if (error) {
             return reject(error);
@@ -30,13 +48,22 @@ export const handler = async (event) => {
   };
 
   // Extract the necessary fields from the event
-  const { token } = event;
+  const { token, tableNum, numSeats } = event;
 
   if (!token) {
     return {
       statusCode: 400,
       body: JSON.stringify({
         error: 'Missing required authentication: token'
+      }),
+    };
+  }
+
+  if (!tableNum || !numSeats) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Missing required fields: tableNum, numSeats'
       }),
     };
   }
@@ -65,41 +92,39 @@ export const handler = async (event) => {
   let response;
   try {
     // Fetch restaurant data based on manager's email
-    const resData = await GetResInfo(email);
+    const resId = await GetResId(email);
+
+    const table = await CreateTable(tableNum, numSeats, resId);
   
-    if (!resData || resData.length === 0) {
-      response = {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: 'No restaurant found for the given manager email',
-        }),
-      };
-    } else {
-      // Assuming only one restaurant is returned; if multiple, modify as needed
-      const restaurant = resData[0];
-  
-      // Return success response with restaurant data
-      response = {
-        statusCode: 200,
-        body: JSON.stringify({
-          name: restaurant.name,
-          address: restaurant.address,
-          isActive: restaurant.isActive,
-          openingHour: restaurant.openingHour,
-          closingHour: restaurant.closingHour,
-        }),
-      };
+    response = {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: 'Table created successfully',
+        table: {
+          tableNum: tableNum,
+          numSeats: numSeats,
+          resId: resId
+        }
+      }),
     }
   } catch (error) {
     console.error('Error fetching restaurant data:', error);
   
-    response = {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'An error occurred while retrieving restaurant information',
-        details: error.message,
-      }),
-    };
+    if (error.code === 'ER_DUP_ENTRY') {
+      response = {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Table already exists',
+        }),
+      }
+    } else {
+      response = {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: error.message,
+        }),
+      };
+    }
   }
 
   // Close the DB connections
