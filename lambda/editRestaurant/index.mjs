@@ -1,9 +1,8 @@
 import mysql from 'mysql';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
-const SECRET_KEY = crypto.randomBytes(64).toString('hex');
+const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export const handler = async (event) => {
   // Set up the database connection pool

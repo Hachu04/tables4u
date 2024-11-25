@@ -34,13 +34,14 @@ export default function RestaurantManagerDashboard() {
         }
 
         const response = await instance.post('/getResInfo', { token });
+        const parsedBody = JSON.parse(response.data.body);
         setRestaurantData({
-          name: response.data.name || '',
-          address: response.data.address || '',
-          openingHour: response.data.openingHour || '',
-          closingHour: response.data.closingHour || ''
+          name: parsedBody.name || '',
+          address: parsedBody.address || '',
+          openingHour: parsedBody.openingHour || '',
+          closingHour: parsedBody.closingHour || ''
         });
-        setIsActive(response.data.isActive);
+        setIsActive(parsedBody.isActive);
         andRefreshDisplay();
         console.log(JSON.stringify(response));
       } catch (error) {
@@ -75,6 +76,22 @@ export default function RestaurantManagerDashboard() {
     window.location.href = '/'; // Redirect to landing page
   };
 
+  const isActiveFn = () => {
+    if (isActive === 0) {
+      return "Inactive"
+    } else {
+      return "Active"
+    }
+  }
+
+  const getOperationHour = () => {
+    if (!restaurantData.openingHour || !restaurantData.closingHour) {
+      return "Set time in Edit"
+    } else {
+      return restaurantData.openingHour + ":00 - " + restaurantData.closingHour + ":00"
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center py-8">
       {/* Heading */}
@@ -87,7 +104,7 @@ export default function RestaurantManagerDashboard() {
         {/* Restaurant Name and Status */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            {restaurantData.name} - Active
+            {restaurantData.name} - {isActiveFn()}
           </h2>
           <button
             className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
@@ -96,6 +113,16 @@ export default function RestaurantManagerDashboard() {
             Logout
           </button>
         </div>
+
+        <div className="flex justify-between items-center mb-6">
+          <p className="text-lg">
+            Address: {restaurantData.name}
+          </p>
+          <p className="text-lg">
+            Daily Schedule: {getOperationHour()}
+          </p>
+        </div>
+
 
         {/* Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
