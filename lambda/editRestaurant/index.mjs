@@ -40,7 +40,7 @@ export const handler = async (event) => {
     };
   }
 
-  if (closingHour != 0 && closingHour <= openingHour || closingHour == openingHour) {
+  if ((parseInt(closingHour) != 0 && parseInt(closingHour) <= parseInt(openingHour)) || parseInt(closingHour) == parseInt(openingHour)) {
     return {
       statusCode: 400,
       body: JSON.stringify({
