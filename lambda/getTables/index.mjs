@@ -10,13 +10,13 @@ export const handler = async (event) => {
     database: "res_manager"
   });
 
-  // Function to create a new restaurant
+  // Function to get list of table
   let GetTables = (email) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        `SELECT Table.tableNum, Table.numSeats
-         FROM Table
-         JOIN Restaurant ON Table.resId = 
+        `SELECT ResTable.tableNum, ResTable.numSeats
+         FROM ResTable
+         JOIN Restaurant ON ResTable.resId = Restaurant.resId
          JOIN RestaurantManager ON Restaurant.resId = RestaurantManager.ownedResId
          WHERE RestaurantManager.email = ?;`,
         [email],
@@ -62,42 +62,37 @@ export const handler = async (event) => {
     };
   }
 
-  // Insert the new restaurant and manager into the database
   let response;
   try {
-    // Fetch restaurant data based on manager's email
-    const resData = await GetResInfo(email);
-  
-    if (!resData || resData.length === 0) {
+    // Fetch the list of tables based on the manager's email
+    const tablesList = await GetTables(email);
+
+    if (!tablesList || tablesList.length === 0) {
+      // No tables found for the manager's restaurant
       response = {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'No restaurant found for the given manager email',
+          error: 'No tables found for the restaurant managed by the provided email.',
         }),
       };
     } else {
-      // Assuming only one restaurant is returned; if multiple, modify as needed
-      const restaurant = resData[0];
-  
-      // Return success response with restaurant data
+      // Return the list of tables
       response = {
         statusCode: 200,
         body: JSON.stringify({
-          name: restaurant.name,
-          address: restaurant.address,
-          isActive: restaurant.isActive,
-          openingHour: restaurant.openingHour,
-          closingHour: restaurant.closingHour,
+          success: true,
+          tables: tablesList,
         }),
       };
     }
   } catch (error) {
-    console.error('Error fetching restaurant data:', error);
-  
+    console.error('Error fetching table data:', error);
+
+    // Handle unexpected errors
     response = {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'An error occurred while retrieving restaurant information',
+        error: 'An error occurred while retrieving table information.',
         details: error.message,
       }),
     };
