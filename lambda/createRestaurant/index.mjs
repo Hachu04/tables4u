@@ -26,12 +26,30 @@ export const handler = async (event) => {
     });
   };
 
-  // Function to create a new restaurant manager
-  let CreateRestaurantManager = (email, password, restaurantName) => {
+  let GetResId = (address) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        "INSERT INTO RestaurantManager (email, password, ownedRestaurant) VALUES (?, ?, ?);",
-        [email, password, restaurantName],
+        `SELECT resId FROM Restaurant WHERE address = ?;`,
+        [address],
+        (error, rows) => {
+          if (error) {
+            return reject(error);
+          }
+          if (rows.length === 0) {
+            return reject(new Error('Restaurant not found.'));
+          }
+          return resolve(rows[0].resId);
+        }
+      );
+    });
+  };
+
+  // Function to create a new restaurant manager
+  let CreateRestaurantManager = (email, password, resId) => {
+    return new Promise((resolve, reject) => {
+      pool.query(
+        "INSERT INTO RestaurantManager (email, password, ownedResId) VALUES (?, ?, ?);",
+        [email, password, resId],
         (error, rows) => {
           if (error) {
             return reject(error);
@@ -73,8 +91,11 @@ export const handler = async (event) => {
     // Create the restaurant
     await CreateRestaurant(name, address);
 
+    //Get restaurant Id to input into manager
+    const id = await GetResId(address);
+
     // Create the restaurant manager and link to the restaurant
-    await CreateRestaurantManager(email, hashedPassword, name);
+    await CreateRestaurantManager(email, hashedPassword, id);
 
     // Return success response
     response = {
