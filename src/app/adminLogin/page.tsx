@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 // API instance for making requests
 const instance = axios.create({
-  baseURL: 'https://vqh08ym9ml.execute-api.us-east-2.amazonaws.com/Initial/',
+  baseURL: 'https://g8lcsp3jlc.execute-api.us-east-2.amazonaws.com/Initial',
 });
 
 export default function AdminLoginPage() {
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
           errorData.message || 'Failed to create restaurant and manager.'
         );
       } else {
-        setErrorMessage('An unexpected error occurred.');
+        setErrorMessage('A really unexpected error occurred.');
       }
       setResponseMsg('');
     }

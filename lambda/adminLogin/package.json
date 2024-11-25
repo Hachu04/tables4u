@@ -6,9 +6,10 @@
     "repository": "TBA",
     "author": "SAM CLI",
     "license": "MIT",
-    "type" : "commonjs",
+    "type": "commonjs",
     "dependencies": {
-      "mysql": "^2.18.1"
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^9.0.2",
+        "mysql": "^2.18.1"
     }
-  }
-  
+}
