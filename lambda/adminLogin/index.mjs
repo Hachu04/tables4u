@@ -26,7 +26,7 @@ export const handler = async (event) => {
           if (error) {
             return reject(error);
           }
-          return resolve(rows.length > 0 ? rows[0] : null);
+          return resolve(rows > 0 ? rows[0] : null);
         }
       );
 
@@ -65,7 +65,7 @@ export const handler = async (event) => {
   try {
 
     // Validate login credentials
-    const admin = await ValidateLogin(email);
+    const admin = await checkAccount(email);
     if (!admin) {
 
       return {
