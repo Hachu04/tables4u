@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 
@@ -10,8 +10,46 @@ const instance = axios.create({
 
 export default function RestaurantManagerDashboard() {
   const [showEditPopup, setShowEditPopup] = useState(false);
+  const [restaurantData, setRestaurantData] = useState({
+    name: '',
+    address: '',
+    openingHour: '',
+    closingHour: '',
+  });
+  const [isActive, setIsActive] = useState(0)
+  const [redraw, forceRedraw] = React.useState(0)
 
-  console.log(localStorage.getItem('authToken'));
+  const andRefreshDisplay = () => {
+    forceRedraw(redraw+1)
+}
+
+  useEffect(() => {
+    // Fetch restaurant data on component mount
+    const fetchRestaurantData = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          console.error('No token found!');
+          return;
+        }
+
+        const response = await instance.post('/getResInfo', { token });
+        setRestaurantData({
+          name: response.data.name || '',
+          address: response.data.address || '',
+          openingHour: response.data.openingHour || '',
+          closingHour: response.data.closingHour || ''
+        });
+        setIsActive(response.data.isActive);
+        andRefreshDisplay();
+        console.log(JSON.stringify(response));
+      } catch (error) {
+        console.error('Error fetching restaurant data:', error);
+      }
+    };
+
+    fetchRestaurantData();
+  }, []);
 
   const handleEditClick = () => {
     setShowEditPopup(true);
@@ -22,9 +60,19 @@ export default function RestaurantManagerDashboard() {
   };
 
   const handleSaveChanges = () => {
-    // Handle save changes logic here
-    console.log('Changes saved!');
+    // Save changes logic here (make API call to update the data)
+    console.log('Updated data:', restaurantData);
     setShowEditPopup(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setRestaurantData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Clear token
+    window.location.href = '/'; // Redirect to landing page
   };
 
   return (
@@ -39,9 +87,12 @@ export default function RestaurantManagerDashboard() {
         {/* Restaurant Name and Status */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            [Restaurant Name] - Active
+            {restaurantData.name} - Active
           </h2>
-          <button className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition">
+          <button
+            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+            onClick={handleLogout}
+          >
             Logout
           </button>
         </div>
@@ -81,8 +132,26 @@ export default function RestaurantManagerDashboard() {
                 </label>
                 <input
                   type="text"
+                  name="name"
+                  value={restaurantData.name}
+                  onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
                   placeholder="Enter restaurant name"
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={restaurantData.address}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
+                  placeholder="Enter restaurant address"
                 />
               </div>
 
@@ -91,23 +160,24 @@ export default function RestaurantManagerDashboard() {
                 <label className="block text-gray-700 font-medium mb-2">
                   Hours of Operation
                 </label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                  placeholder="e.g., 9:00 AM - 10:00 PM"
-                />
-              </div>
-
-              {/* Number of Tables Field */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Number of Tables
-                </label>
-                <input
-                  type="number"
-                  className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                  placeholder="Enter table count"
-                />
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    name="openingHour"
+                    value={restaurantData.openingHour}
+                    onChange={handleInputChange}
+                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
+                    placeholder="Opening hour"
+                  />
+                  <input
+                    type="text"
+                    name="closingHour"
+                    value={restaurantData.closingHour}
+                    onChange={handleInputChange}
+                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
+                    placeholder="Closing hour"
+                  />
+                </div>
               </div>
             </form>
 

@@ -25,7 +25,7 @@ export default function RestaurantLoginPage() {
 
     try {
       // Make API call to create the restaurant
-      const response = await instance.post('restaurantLogin', credential);
+      const response = await instance.post('loginRestaurant', credential);
 
       const { statusCode, body } = response.data;
       console.log(JSON.stringify(response));

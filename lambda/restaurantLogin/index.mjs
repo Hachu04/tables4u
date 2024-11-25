@@ -1,6 +1,5 @@
 import mysql from 'mysql';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
 const SECRET_KEY = crypto.randomBytes(64).toString('hex');
@@ -60,7 +59,7 @@ export const handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({
           error: 'Invalid email or password'
-        }),
+        })
       };
     }
 
@@ -91,7 +90,7 @@ export const handler = async (event) => {
     };
   } catch (error) {
     return {
-      statusCode: 500,
+      statusCode: 400,
       body: JSON.stringify({
         error: 'Internal server error: ' + error.message,
       }),
