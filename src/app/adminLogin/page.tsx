@@ -106,9 +106,9 @@ export default function AdminLoginPage() {
         <div className="mt-8 p-4 border rounded bg-green-50">
           <h2 className="text-xl font-semibold mb-2">Success!</h2>
           <p>{responseMsg}</p>
-          <Link href="/">
+          <Link href="/adminDashboard">
             <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-              &larr; Return to Landing Page
+              &larr; Continue to Admin Dashboard
             </button>
           </Link>
         </div>
