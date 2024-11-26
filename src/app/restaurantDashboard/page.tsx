@@ -33,11 +33,20 @@ export default function RestaurantManagerDashboard() {
   const [tables, setTables] = useState<Table[]>([]);
   const [newTable, setNewTable] = useState({ tableNum: '', numSeats: '' });
   const [loading, setLoading] = useState(false);
-
+  const [fetchTablesTrigger, setFetchTablesTrigger] = useState(true);
+  const [fetchRestaurantTrigger, setFetchRestaurantTrigger] = useState(true);
+  const [checkTokenTrigger, setCheckTokenTrigger] = useState(true);
 
   const andRefreshDisplay = () => {
     forceRedraw(redraw + 1)
   }
+
+  useEffect(() => {
+    if (checkTokenTrigger) {
+      checkToken();
+      setCheckTokenTrigger(false); // Reset the trigger
+    }
+  }, [checkTokenTrigger]);
 
   const checkToken = async () => {
     try {
@@ -117,9 +126,18 @@ export default function RestaurantManagerDashboard() {
   };
 
   useEffect(() => {
-    checkToken();
-    fetchRestaurantData();
-  }, []);
+    if (fetchRestaurantTrigger) {
+      fetchRestaurantData();
+      setFetchRestaurantTrigger(false); // Reset the trigger
+    }
+  }, [fetchRestaurantTrigger]);
+
+  useEffect(() => {
+    if (fetchTablesTrigger) {
+      fetchTables();
+      setFetchTablesTrigger(false); // Reset the trigger
+    }
+  }, [fetchTablesTrigger]);
 
   const handleEditRestaurantClick = () => {
     setShowEditPopup(true);
@@ -129,11 +147,11 @@ export default function RestaurantManagerDashboard() {
     setShowEditPopup(false);
     setResponseMsg('');
     setErrorMessage('');
-    fetchRestaurantData();
+    setFetchRestaurantTrigger(true);
   };
 
   const handleOpenEditTablePopup = () => {
-    fetchTables(); // Fetch existing tables when opening the popup
+    setFetchTablesTrigger(true); // Fetch existing tables when opening the popup
     setShowEditTablePopup(true);
   };
 
@@ -209,7 +227,7 @@ export default function RestaurantManagerDashboard() {
       if (statusCode === 200) {
         setResponseMsg('Table added successfully!');
         setNewTable({ tableNum: '', numSeats: '' }); // Reset the input fields
-        fetchTables(); // Refresh the table list
+        setFetchTablesTrigger(true); // Refresh the table list
       } else {
         setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
       }
@@ -252,7 +270,7 @@ export default function RestaurantManagerDashboard() {
 
       if (statusCode === 200) {
         setResponseMsg('Table deleted successfully!');
-        fetchTables();
+        setFetchTablesTrigger(true);
       } else {
         const parsedBody = JSON.parse(body)
         console.log("delete error: " + parsedBody.error);
@@ -283,7 +301,7 @@ export default function RestaurantManagerDashboard() {
 
     setErrorMessage('');
     setResponseMsg('');
-    fetchRestaurantData();
+    setFetchRestaurantTrigger(true);
     andRefreshDisplay();
   }
 
@@ -442,7 +460,7 @@ export default function RestaurantManagerDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken'); // Clear token
-    window.location.href = '/'; // Redirect to landing page
+    //window.location.href = '/'; // Redirect to landing page
   };
 
   const isActiveFn = () => {
@@ -493,12 +511,14 @@ export default function RestaurantManagerDashboard() {
           <h2 className="text-xl font-semibold">
             {restaurantData.name} - {isActiveFn()}
           </h2>
-          <button
-            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
+          <Link href='/'>
+            <button
+              className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </Link>
         </div>
 
         <div className="flex justify-between items-center mb-6">
