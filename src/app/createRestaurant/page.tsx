@@ -95,7 +95,7 @@ export default function CreateRestaurantPage() {
             type="text"
             value={restaurantName}
             onChange={(e) => setRestaurantName(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
@@ -107,7 +107,7 @@ export default function CreateRestaurantPage() {
             type="text"
             value={restaurantAddress}
             onChange={(e) => setRestaurantAddress(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
@@ -119,7 +119,7 @@ export default function CreateRestaurantPage() {
             type="email"
             value={restaurantEmail}
             onChange={(e) => setRestaurantEmail(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
@@ -131,7 +131,7 @@ export default function CreateRestaurantPage() {
             type="password"
             value={restaurantPassword}
             onChange={(e) => setRestaurantPassword(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>

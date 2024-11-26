@@ -82,7 +82,7 @@ export default function AdminLoginPage() {
             type="email"
             value={adminEmail}
             onChange={(e) => setAdminEmail(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
@@ -94,7 +94,7 @@ export default function AdminLoginPage() {
             type="password"
             value={adminPassword}
             onChange={(e) => setAdminPassword(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
