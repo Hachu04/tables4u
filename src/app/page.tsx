@@ -44,10 +44,11 @@ export default function Home() {
           <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
             Find Existing Reservation
           </button>
-
+        <Link href = "/consumerDashboard">
           <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
             Go to Consumer Dashboard
           </button>
+        </Link>
         </div>
       </div>
     </div>
