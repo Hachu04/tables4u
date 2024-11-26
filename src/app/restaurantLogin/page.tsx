@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 // API instance for making requests
 const instance = axios.create({
@@ -13,6 +14,7 @@ export default function RestaurantLoginPage() {
   const [restaurantPassword, setRestaurantPassword] = useState('');
   const [responseMsg, setResponseMsg] = useState('')
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
@@ -24,6 +26,9 @@ export default function RestaurantLoginPage() {
     };
 
     try {
+      setErrorMessage('');
+      setResponseMsg('');
+      setLoading(true);
       // Make API call to create the restaurant
       const response = await instance.post('loginRestaurant', credential);
 
@@ -51,6 +56,8 @@ export default function RestaurantLoginPage() {
         setErrorMessage('An unexpected error occurred.');
       }
       setResponseMsg('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,6 +110,7 @@ export default function RestaurantLoginPage() {
       </form>
 
       {/* Display API response message */}
+      {loading && <LoadingSpinner />}
       {responseMsg ? (
         <div className="mt-8 p-4 border rounded bg-green-50">
           <h2 className="text-xl font-semibold mb-2">Success!</h2>
