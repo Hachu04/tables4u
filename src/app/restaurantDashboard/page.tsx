@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { opendirSync } from 'fs';
-import { collectRoutesUsingEdgeRuntime } from 'next/dist/build/utils';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 // API instance for making requests
 const instance = axios.create({
@@ -14,6 +13,7 @@ export default function RestaurantManagerDashboard() {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showEditTablePopup, setShowEditTablePopup] = useState(false);
   const [showActivatePopup, setShowActivatePopup] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [responseMsg, setResponseMsg] = useState('')
   const [errorMessage, setErrorMessage] = useState('');
   const [restaurantData, setRestaurantData] = useState({
@@ -23,24 +23,69 @@ export default function RestaurantManagerDashboard() {
     openingHour: '',
     closingHour: '',
   });
-  const [redraw, forceRedraw] = React.useState(0)
+  const [redraw, forceRedraw] = React.useState(0);
+
+  type Table = {
+    tableNum: number;
+    numSeats: number;
+  };
+
+  const [tables, setTables] = useState<Table[]>([]);
+  const [newTable, setNewTable] = useState({ tableNum: '', numSeats: '' });
+  const [loading, setLoading] = useState(false);
+
 
   const andRefreshDisplay = () => {
     forceRedraw(redraw + 1)
   }
 
-  useEffect(() => {
-    // Fetch restaurant data on component mount
-    const fetchRestaurantData = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          console.error('No token found!');
-          return;
-        }
+  const checkToken = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No token found!');
+        return;
+      }
 
-        const response = await instance.post('/getResInfo', { token });
-        const parsedBody = JSON.parse(response.data.body);
+      const response = await instance.post('checkToken', { token });
+
+      const { statusCode, body } = response.data;
+      const parsedBody = JSON.parse(body);
+      if (statusCode === 400) {
+        if (parsedBody.error === 'Invalid token: jwt expired') {
+          alert('Session expired, you will not be able to execute tasks. Please click logout and login again');
+        }
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to check token.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    }
+  };
+
+  // Fetch restaurant data on component mount
+  const fetchRestaurantData = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No token found!');
+        return;
+      }
+
+      const response = await instance.post('getResInfo', { token });
+
+      const { statusCode, body } = response.data;
+      const parsedBody = JSON.parse(body);
+      if (statusCode === 200) {
         setRestaurantData({
           name: parsedBody.name || '',
           address: parsedBody.address || '',
@@ -50,11 +95,29 @@ export default function RestaurantManagerDashboard() {
         });
         andRefreshDisplay();
         console.log(JSON.stringify(response));
-      } catch (error) {
-        console.error('Error fetching restaurant data:', error);
+      } else {
+        if (parsedBody.error === 'No restaurant found for the given manager email') {
+          alert('No restaurant found for the given manager email. Please click logout to go back to landing page');
+        }
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
       }
-    };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to fetch restaurant data.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    checkToken();
     fetchRestaurantData();
   }, []);
 
@@ -64,14 +127,150 @@ export default function RestaurantManagerDashboard() {
 
   const handleCloseEditRestaurantPopup = () => {
     setShowEditPopup(false);
+    setResponseMsg('');
+    setErrorMessage('');
   };
 
-  const handleEditTableClick = () => {
+  const handleOpenEditTablePopup = () => {
+    fetchTables(); // Fetch existing tables when opening the popup
     setShowEditTablePopup(true);
-  }
+  };
 
   const handleCloseEditTablePopup = () => {
     setShowEditTablePopup(false);
+    setResponseMsg('');
+    setErrorMessage('');
+  };
+
+  const fetchTables = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No token found!');
+        return;
+      }
+
+      const response = await instance.post('getTables', { token });
+      const { statusCode, body } = response.data
+
+      if (statusCode === 200) {
+        const parsedBody = JSON.parse(body);
+        setTables(parsedBody.tables);
+      } else {
+        const parsedBody = JSON.parse(body);
+        setTables([]);
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to fetch tables data.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createTable = async () => {
+    setResponseMsg('');
+    setErrorMessage('');
+    if (!newTable.tableNum || !newTable.numSeats) {
+      setErrorMessage('Please fill in both fields.');
+      return;
+    }
+
+    if (parseInt(newTable.numSeats) < 1 || parseInt(newTable.numSeats) > 8) {
+      setErrorMessage('Number of seats must be 1-8');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No token found!');
+        return;
+      }
+
+      const response = await instance.post('createTable', { token: token, tableNum: newTable.tableNum, numSeats: newTable.numSeats });
+
+      console.log(JSON.stringify(response));
+
+      const { statusCode, body } = response.data;
+      const parsedBody = JSON.parse(body);
+
+      if (statusCode === 200) {
+        setResponseMsg('Table added successfully!');
+        setNewTable({ tableNum: '', numSeats: '' }); // Reset the input fields
+        fetchTables(); // Refresh the table list
+      } else {
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to create table.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTable = async (tableNum: any) => {
+    setResponseMsg('');
+    setErrorMessage('');
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No token found!');
+        return;
+      }
+
+      const response = await instance.post('deleteTable', { token: token, tableNum: tableNum });
+
+      console.log(JSON.stringify(response));
+      console.log(response.data.statusCode);
+
+      const { statusCode, body } = response.data;
+
+      console.log(statusCode);
+
+      if (statusCode === 200) {
+        setResponseMsg('Table deleted successfully!');
+        fetchTables();
+      } else {
+        const parsedBody = JSON.parse(body)
+        console.log("delete error: " + parsedBody.error);
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to delete table.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    } finally {
+      setLoading(false);
+    }
   }
 
   const handleActivateRestaurantClick = () => {
@@ -81,33 +280,20 @@ export default function RestaurantManagerDashboard() {
   const handleCloseActivateRestaurantPopup = () => {
     setShowActivatePopup(false);
 
-    // Fetch restaurant data on component mount
-    const fetchRestaurantData = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          console.error('No token found!');
-          return;
-        }
-
-        const response = await instance.post('/getResInfo', { token });
-        const parsedBody = JSON.parse(response.data.body);
-        setRestaurantData({
-          name: parsedBody.name || '',
-          address: parsedBody.address || '',
-          isActive: parsedBody.isActive || 0,
-          openingHour: parsedBody.openingHour || '',
-          closingHour: parsedBody.closingHour || ''
-        });
-        andRefreshDisplay();
-        console.log(JSON.stringify(response));
-      } catch (error) {
-        console.error('Error fetching restaurant data:', error);
-      }
-    };
-
+    setErrorMessage('');
+    setResponseMsg('');
     fetchRestaurantData();
     andRefreshDisplay();
+  }
+
+  const handleDeleteRestaurantClick = () => {
+    setShowDeletePopup(true);
+  };
+
+  const handleCancelDeleteRestaurant = () => {
+    setShowDeletePopup(false);   
+    setErrorMessage('');
+    setResponseMsg(''); 
   }
 
   const handleSaveChanges = async () => {
@@ -129,6 +315,7 @@ export default function RestaurantManagerDashboard() {
     };
 
     if (restaurantData.isActive === 0) {
+      setLoading(true);
       try {
         // Make API call to create the restaurant
         const response = await instance.post('editRestaurant', payload);
@@ -153,15 +340,20 @@ export default function RestaurantManagerDashboard() {
           setErrorMessage('An unexpected error occurred.');
         }
         setResponseMsg('');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      //active 
     }
   };
 
   const handleConfirmActivate = async () => {
     // Save changes logic here (make API call to update the data)
     console.log('Updated data:', restaurantData);
+
+    if (!restaurantData.openingHour || !restaurantData.closingHour) {
+      setErrorMessage("Must set opeing hour and closing hour before activating")
+      return;
+    }
 
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -173,6 +365,7 @@ export default function RestaurantManagerDashboard() {
       token: token
     };
 
+    setLoading(true);
     try {
       // Make API call to activate the restaurant
       const response = await instance.post('activateRestaurant', payload);
@@ -181,7 +374,6 @@ export default function RestaurantManagerDashboard() {
       console.log(JSON.stringify(response));
 
       if (statusCode === 200) {
-        const parsedBody = JSON.parse(body); // Parse the response body
         setResponseMsg("Success! Restaurant activated.");
       } else {
         const parsedBody = JSON.parse(body);
@@ -197,6 +389,48 @@ export default function RestaurantManagerDashboard() {
         setErrorMessage('An unexpected error occurred.');
       }
       setResponseMsg('');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('No token found!');
+      return;
+    }
+
+    const payload = {
+      token: token
+    };
+
+    setLoading(true);
+    try {
+      // Make API call to activate the restaurant
+      const response = await instance.post('deleteRestaurant', payload);
+
+      const { statusCode, body } = response.data;
+      console.log(JSON.stringify(response));
+
+      if (statusCode === 200) {
+        setResponseMsg("Success! Restaurant deleted.");
+      } else {
+        const parsedBody = JSON.parse(body);
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to activate restaurant.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -247,6 +481,10 @@ export default function RestaurantManagerDashboard() {
         Restaurant Manager Dashboard
       </h1>
 
+      {/* Show Loading Spinner when loading */}
+      {loading && <LoadingSpinner />}
+
+
       {/* Restaurant Information */}
       <div className="w-full max-w-3xl bg-gray-100 p-6 rounded shadow-lg">
         {/* Restaurant Name and Status */}
@@ -286,7 +524,7 @@ export default function RestaurantManagerDashboard() {
           {/* Edit Tables Button */}
           <button
             className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-            onClick={handleEditTableClick}
+            onClick={handleOpenEditTablePopup}
             style={{ visibility: inactiveVisibility() }}
           >
             Edit Tables
@@ -318,7 +556,7 @@ export default function RestaurantManagerDashboard() {
           </button>
 
           {/* Delete Restaurant Button */}
-          <button className="w-full bg-red-500 text-white py-3 rounded hover:bg-red-600 transition">
+          <button onClick={handleDeleteRestaurantClick} className="w-full bg-red-500 text-white py-3 rounded hover:bg-red-600 transition">
             Delete Restaurant
           </button>
         </div>
@@ -403,6 +641,7 @@ export default function RestaurantManagerDashboard() {
             </div>
 
             {/* Display API response message */}
+            {loading && <LoadingSpinner />}
             {responseMsg ? (
               <div className="mt-8 p-4 border rounded bg-green-50">
                 <h2 className="text-xl font-semibold mb-2">Success!</h2>
@@ -449,6 +688,7 @@ export default function RestaurantManagerDashboard() {
             </div>
 
             {/* Display API response message */}
+            {loading && <LoadingSpinner />}
             {responseMsg ? (
               <div className="mt-8 p-4 border rounded bg-green-50">
                 <h2 className="text-xl font-semibold mb-2">Success!</h2>
@@ -461,6 +701,137 @@ export default function RestaurantManagerDashboard() {
                   Close
                 </button>
 
+              </div>
+            ) : errorMessage ? (
+              <div className="mt-8 p-4 border rounded bg-red-50">
+                <h2 className="text-xl font-semibold mb-2">Error</h2>
+                <p>{errorMessage}</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Table Popup */}
+      {showEditTablePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Edit Tables</h2>
+            <form className="space-y-4">
+              {/* Add Table Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Add Table
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newTable.tableNum}
+                    name="tableNum"
+                    placeholder="Table Number"
+                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
+                    onChange={(e) => setNewTable({ ...newTable, tableNum: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    value={newTable.numSeats}
+                    name="numSeats"
+                    placeholder="Seats"
+                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
+                    onChange={(e) => setNewTable({ ...newTable, numSeats: e.target.value })}
+                  />
+                </div>
+              </div>
+            </form>
+
+            {/* Existing Tables */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Existing Tables</h3>
+              <ul className="space-y-4">
+                {tables.map((table) => (
+                  <li key={table.tableNum} className="flex justify-between items-center">
+                    <span>
+                      Table {table.tableNum} - {table.numSeats} seats
+                    </span>
+                    <button
+                      className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600 transition"
+                      onClick={() => deleteTable(table.tableNum)}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Display API response message */}
+            {loading && <LoadingSpinner />}
+            {responseMsg ? (
+              <div className="mt-8 p-4 border rounded bg-green-50">
+                <h2 className="text-xl font-semibold mb-2">Success!</h2>
+                <p>{responseMsg}</p>
+              </div>
+            ) : errorMessage ? (
+              <div className="mt-8 p-4 border rounded bg-red-50">
+                <p>{errorMessage}</p>
+              </div>
+            ) : null}
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center mt-6">
+              <button
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+                onClick={createTable}
+              >
+                Add Table
+              </button>
+              <button
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
+                onClick={handleCloseEditTablePopup}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Restaurant Popup */}
+      {showDeletePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Delete Restaurant?</h2>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
+                onClick={handleCancelDeleteRestaurant}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+                onClick={handleConfirmDelete}
+              >
+                Confirm
+              </button>
+            </div>
+
+            {/* Display API response message */}
+            {loading && <LoadingSpinner />}
+            {responseMsg ? (
+              <div className="mt-8 p-4 border rounded bg-green-50">
+                <h2 className="text-xl font-semibold mb-2">Success!</h2>
+                <p>{responseMsg}</p>
+
+                <Link href='/'>
+                  <button
+                    className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+                  >
+                    Back to Landing Page
+                  </button>
+                </Link>
               </div>
             ) : errorMessage ? (
               <div className="mt-8 p-4 border rounded bg-red-50">

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 // API instance for making requests
 const instance = axios.create({
@@ -18,10 +19,14 @@ export default function CreateRestaurantPage() {
     manager?: { email: string };
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Handle form submission
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+
+    setLoading(true);
+    setErrorMessage('');
   
     const restaurantData = {
       name: restaurantName,
@@ -60,7 +65,10 @@ export default function CreateRestaurantPage() {
           setErrorMessage('An unexpected error occurred.');
         }
         setResponseDetails(null);
-      });
+      })
+      .finally(function () {
+        setLoading(false);
+      })
   };
   
 
@@ -136,6 +144,7 @@ export default function CreateRestaurantPage() {
       </form>
 
       {/* Display API response message */}
+      {loading && <LoadingSpinner />}
       {responseDetails ? (
         <div className="mt-8 p-4 border rounded bg-green-50">
           <h2 className="text-xl font-semibold mb-2">Success!</h2>

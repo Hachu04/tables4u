@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 // API instance for making requests
 const instance = axios.create({
@@ -13,6 +14,7 @@ export default function AdminLoginPage() {
   const [adminPassword, setAdminPassword] = useState('');
   const [responseMsg, setResponseMsg] = useState('')
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
@@ -23,6 +25,7 @@ export default function AdminLoginPage() {
       password: adminPassword,
     };
 
+    setLoading(true);
     try {
       // Make API call to create the restaurant
       const response = await instance.post('adminLogin', credential);
@@ -50,6 +53,8 @@ export default function AdminLoginPage() {
         setErrorMessage('A really unexpected error occurred.');
       }
       setResponseMsg('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,13 +107,14 @@ export default function AdminLoginPage() {
       </form>
 
       {/* Display API response message */}
+      {loading && <LoadingSpinner />}
       {responseMsg ? (
         <div className="mt-8 p-4 border rounded bg-green-50">
           <h2 className="text-xl font-semibold mb-2">Success!</h2>
           <p>{responseMsg}</p>
           <Link href="/adminDashboard">
             <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-              &larr; Continue to Admin Dashboard
+              Continue to Admin Dashboard
             </button>
           </Link>
         </div>

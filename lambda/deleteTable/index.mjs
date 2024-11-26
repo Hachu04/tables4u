@@ -15,9 +15,9 @@ export const handler = async (event) => {
         return new Promise((resolve, reject) => {
             pool.query(
                 `SELECT Restaurant.resId
-                FROM Restaurant
-                JOIN RestaurantManager ON Restaurant.resId = RestaurantManager.ownedResId
-                WHERE RestaurantManager.email = ?;`,
+         FROM Restaurant
+         JOIN RestaurantManager ON Restaurant.resId = RestaurantManager.ownedResId
+         WHERE RestaurantManager.email = ?;`,
                 [email],
                 (error, rows) => {
                     if (error) {
@@ -98,12 +98,22 @@ export const handler = async (event) => {
         const resId = await GetResId(email)
         const result = await DeleteTable(tableNum, resId)
         if (result) {
-            response = { statusCode: 200, result: { "success": true } }
+            response = { statusCode: 200, body: { "success": true } }
         } else {
-            response = { statusCode: 400, error: "No such table" }
+            response = {
+                statusCode: 400,
+                body: JSON.stringify({
+                  error: 'No such table',
+                }),
+            }    
         }
     } catch (error) {
-        response = { statusCode: 400, error: error }
+        response = {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: error,
+            }),
+        }    
     }
 
     // Close the DB connections
