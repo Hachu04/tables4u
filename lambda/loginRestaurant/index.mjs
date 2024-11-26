@@ -30,7 +30,7 @@ export const handler = async (event) => {
     };
 
     // Extract the necessary fields from the event
-    const { email, password } = event; // Assume event contains login details
+    const { email, password } = event;
 
     if (!email || !password) {
         return {
@@ -53,12 +53,11 @@ export const handler = async (event) => {
     }
 
     // Insert the new restaurant and manager into the database
-    let response;
     try {
         // Validate login credentials
         const manager = await LoginRestaurant(email);
         if (!manager) {
-            response = {
+            return {
                 statusCode: 400,
                 body: JSON.stringify({
                     error: 'Invalid email or password'
@@ -69,7 +68,7 @@ export const handler = async (event) => {
         // Compare input password with database's hashed password
         const isMatch = await bcrypt.compare(password, manager.password);
         if (!isMatch) {
-            response = {
+            return {
                 statusCode: 400,
                 body: JSON.stringify({
                     error: 'Invalid email or password'
@@ -85,7 +84,7 @@ export const handler = async (event) => {
         )
 
         // Return success response
-        response = {
+        return {
             statusCode: 200,
             body: JSON.stringify({
                 message: 'Logged in',
@@ -94,7 +93,7 @@ export const handler = async (event) => {
         }
     } catch (error) {
         // Handle any database errors
-        response = {
+        return {
             statusCode: 400,
             body: JSON.stringify({
                 error: 'Internal server error: '
@@ -104,6 +103,4 @@ export const handler = async (event) => {
 
     // Close the DB connections
     pool.end();
-
-    return response;
 };
