@@ -80,6 +80,33 @@ export default function RestaurantManagerDashboard() {
 
   const handleCloseActivateRestaurantPopup = () => {
     setShowActivatePopup(false);
+
+    // Fetch restaurant data on component mount
+    const fetchRestaurantData = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          console.error('No token found!');
+          return;
+        }
+
+        const response = await instance.post('/getResInfo', { token });
+        const parsedBody = JSON.parse(response.data.body);
+        setRestaurantData({
+          name: parsedBody.name || '',
+          address: parsedBody.address || '',
+          isActive: parsedBody.isActive || 0,
+          openingHour: parsedBody.openingHour || '',
+          closingHour: parsedBody.closingHour || ''
+        });
+        andRefreshDisplay();
+        console.log(JSON.stringify(response));
+      } catch (error) {
+        console.error('Error fetching restaurant data:', error);
+      }
+    };
+
+    fetchRestaurantData();
     andRefreshDisplay();
   }
 
@@ -171,7 +198,6 @@ export default function RestaurantManagerDashboard() {
       }
       setResponseMsg('');
     }
-    andRefreshDisplay();
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
