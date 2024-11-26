@@ -13,6 +13,7 @@ const instance = axios.create({
 export default function RestaurantManagerDashboard() {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [showEditTablePopup, setShowEditTablePopup] = useState(false);
+  const [showActivatePopup, setShowActivatePopup] = useState(false);
   const [responseMsg, setResponseMsg] = useState('')
   const [errorMessage, setErrorMessage] = useState('');
   const [restaurantData, setRestaurantData] = useState({
@@ -73,6 +74,14 @@ export default function RestaurantManagerDashboard() {
     setShowEditTablePopup(false);
   }
 
+  const handleActivateRestaurantClick = () => {
+    setShowActivatePopup(true);
+  };
+
+  const handleCloseActivateRestaurantPopup = () => {
+    setShowActivatePopup(false);
+  }
+
   const handleSaveChanges = async () => {
     // Save changes logic here (make API call to update the data)
     console.log('Updated data:', restaurantData);
@@ -122,6 +131,48 @@ export default function RestaurantManagerDashboard() {
     }
   };
 
+  const handleConfirmActivate = async () => {
+    // Save changes logic here (make API call to update the data)
+    console.log('Updated data:', restaurantData);
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.error('No token found!');
+      return;
+    }
+
+    const payload = {
+      token: token,
+      isActive: restaurantData.isActive
+    };
+
+    try {
+      // Make API call to create the restaurant
+      const response = await instance.post('activateRestaurant', payload);
+
+      const { statusCode, body } = response.data;
+      console.log(JSON.stringify(response));
+
+      if (statusCode === 200) {
+        const parsedBody = JSON.parse(body); // Parse the response body
+        setResponseMsg("Success! Restaurant activated.");
+      } else {
+        const parsedBody = JSON.parse(body);
+        setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        setErrorMessage(
+          errorData.message || 'Failed to activate restaurant.'
+        );
+      } else {
+        setErrorMessage('An unexpected error occurred.');
+      }
+      setResponseMsg('');
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRestaurantData((prevData) => ({ ...prevData, [name]: value }));
@@ -138,6 +189,20 @@ export default function RestaurantManagerDashboard() {
     } else {
       return "Active"
     }
+  }
+
+  const inactiveVisibility = () => {
+    if (restaurantData.isActive === 0) {
+      return "visible"
+    }
+    return "hidden"
+  }
+
+  const activeVisibility = () => {
+    if (restaurantData.isActive === 0) {
+      return "hidden"
+    }
+    return "visible"
   }
 
   const getOperationHour = () => {
@@ -186,6 +251,7 @@ export default function RestaurantManagerDashboard() {
           <button
             className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
             onClick={handleEditRestaurantClick}
+            style={{ visibility: inactiveVisibility() }}
           >
             Edit Restaurant
           </button>
@@ -194,13 +260,33 @@ export default function RestaurantManagerDashboard() {
           <button
             className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
             onClick={handleEditTableClick}
+            style={{ visibility: inactiveVisibility() }}
           >
             Edit Tables
           </button>
 
           {/* Activate Restaurant Button */}
-          <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+          <button
+            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            style={{ visibility: inactiveVisibility() }}
+          >
             Activate Restaurant
+          </button>
+
+          {/* Review Availability Button */}
+          <button
+            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            style={{ visibility: activeVisibility() }}
+          >
+            Review Availability
+          </button>
+
+          {/* Open/Reopen Button */}
+          <button
+            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            style={{ visibility: activeVisibility() }}
+          >
+            Open/Reopen
           </button>
 
           {/* Delete Restaurant Button */}
@@ -297,6 +383,52 @@ export default function RestaurantManagerDashboard() {
                 <button
                   className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
                   onClick={handleCloseEditRestaurantPopup}
+                >
+                  Close
+                </button>
+
+              </div>
+            ) : errorMessage ? (
+              <div className="mt-8 p-4 border rounded bg-red-50">
+                <h2 className="text-xl font-semibold mb-2">Error</h2>
+                <p>{errorMessage}</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Activate Restaurant Popup */}
+      {showActivatePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Activate Restaurant?</h2>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
+                onClick={handleCloseActivateRestaurantPopup}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+                onClick={handleConfirmActivate}
+              >
+                Confirm
+              </button>
+            </div>
+
+            {/* Display API response message */}
+            {responseMsg ? (
+              <div className="mt-8 p-4 border rounded bg-green-50">
+                <h2 className="text-xl font-semibold mb-2">Success!</h2>
+                <p>{responseMsg}</p>
+
+                <button
+                  className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+                  onClick={handleCloseActivateRestaurantPopup}
                 >
                   Close
                 </button>
