@@ -2,9 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const instance = axios.create({
+    baseURL: 'https://0mjckhjhy0.execute-api.us-east-2.amazonaws.com/Initial'
+});
+
 export default function consumerDashboard(){
 
-    const [restaurants, setRestaurants] = useState<{ name: string}[]>([]);
+    const [restaurants, setRestaurants] = useState<{ name: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +20,8 @@ export default function consumerDashboard(){
             setLoading(true); // Show loading state
             setError(null);   // Reset any previous errors
 
-            // Call your Lambda function endpoint (NOT SURE IF CORRECT LINK)
-            const response = await axios.post('https://0mjckhjhy0.execute-api.us-east-2.amazonaws.com/Initial')
+            // Call your Lambda function endpoint 
+            const response = await instance.post('consumerListRestaurants')
 
             // Update webpage with the restaurant data
             setRestaurants(response.data.restaurant);
