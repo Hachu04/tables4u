@@ -80,6 +80,7 @@ export default function RestaurantManagerDashboard() {
 
   const handleCloseActivateRestaurantPopup = () => {
     setShowActivatePopup(false);
+    andRefreshDisplay();
   }
 
   const handleSaveChanges = async () => {
@@ -142,12 +143,11 @@ export default function RestaurantManagerDashboard() {
     }
 
     const payload = {
-      token: token,
-      isActive: restaurantData.isActive
+      token: token
     };
 
     try {
-      // Make API call to create the restaurant
+      // Make API call to activate the restaurant
       const response = await instance.post('activateRestaurant', payload);
 
       const { statusCode, body } = response.data;
@@ -171,6 +171,7 @@ export default function RestaurantManagerDashboard() {
       }
       setResponseMsg('');
     }
+    andRefreshDisplay();
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,6 +269,7 @@ export default function RestaurantManagerDashboard() {
           {/* Activate Restaurant Button */}
           <button
             className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+            onClick={handleActivateRestaurantClick}
             style={{ visibility: inactiveVisibility() }}
           >
             Activate Restaurant
