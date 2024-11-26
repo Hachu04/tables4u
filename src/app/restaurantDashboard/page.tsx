@@ -129,6 +129,7 @@ export default function RestaurantManagerDashboard() {
     setShowEditPopup(false);
     setResponseMsg('');
     setErrorMessage('');
+    fetchRestaurantData();
   };
 
   const handleOpenEditTablePopup = () => {
