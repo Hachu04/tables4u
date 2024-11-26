@@ -23,9 +23,31 @@ export default function consumerDashboard(){
             setRestaurants(response.data.restaurant);
 
         } catch (error){
+            // Check what type of error might get
+            if (axios.isAxiosError(error)) {
 
-            console.error('Error fetching restaurants:', error);
-            setError('Failed to load restaurants. Please try again.');
+                console.error('Axios error:', error);
+                const status = error.response?.status;
+
+                if (status === 404) {
+
+                  setError('Endpoint not found. Please check the API URL.');
+
+                } else if (status === 401) {
+
+                  setError('Unauthorized. Please log in again.');
+
+                } else {
+
+                  setError(error.response?.data?.error || 'Failed to load restaurants. Please try again.');
+
+                }
+              } else {
+
+                console.error('Error fetching restaurants:', error);
+                setError('An unexpected error occurred. Please try again.');
+
+            }
 
         } finally {
 
@@ -64,7 +86,7 @@ export default function consumerDashboard(){
                                 {restaurant.name} —{' '}
                             </li>
                         ))}
-                        
+
                     </ul>
                 </div>
             )}
