@@ -1,6 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import LoadingSpinner from '../utils/LoadingSpinner';
+
+const instance = axios.create({
+  baseURL: 'https://g8lcsp3jlc.execute-api.us-east-2.amazonaws.com/Initial/'
+});
 
 export default function AdminDashboard() {
   const [restaurants, setRestaurants] = useState<{ name: string; isActive: number }[]>([]);
@@ -22,24 +27,31 @@ export default function AdminDashboard() {
       }
 
       // Call your Lambda function endpoint
-      const response = await axios.post('https://g8lcsp3jlc.execute-api.us-east-2.amazonaws.com/Initial', {
+      const response = await instance.post('adminListRestaurant', {
         token, // Use the retrieved token
       });
 
       // Update state with the restaurant data
       setRestaurants(response.data.restaurant);
     } catch (err) {
-      console.error('Error fetching restaurants:', err);
-      setError('Failed to load restaurants. Please try again.');
+      if (axios.isAxiosError(err)) {
+        console.error('Axios error:', err);
+        const status = err.response?.status;
+        if (status === 404) {
+          setError('Endpoint not found. Please check the API URL.');
+        } else if (status === 401) {
+          setError('Unauthorized. Please log in again.');
+        } else {
+          setError(err.response?.data?.error || 'Failed to load restaurants. Please try again.');
+        }
+      } else {
+        console.error('Error fetching restaurants:', err);
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false); // Hide loading state
     }
   };
-
-  // Optional: Auto-fetch data when the component mounts
-  useEffect(() => {
-    fetchRestaurantData();
-  }, []);
 
   return (
     <div className="p-4">
