@@ -11,6 +11,39 @@ export const handler = async (event) => {
     database: "res_manager"
   })
 
+  // Extract the necessary fields from the event
+  const { token } = event;
+
+  if (!token) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Missing required authentication: token'
+      }),
+    };
+  }
+  const { email, role } = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+  if (!email || !role) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Invalid token payload'
+      }),
+    };
+  }
+
+  // Checks if person has the Admin role
+  if (role !== 'Admin') {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Incorrect role'
+      }),
+    };
+  }
+
+
   // List restaurant name and active status from database
   let listRestaurants = () => {
 
@@ -25,38 +58,6 @@ export const handler = async (event) => {
 
     })
 
-  }
-
-  // Extract the necessary fields from the event
-  const { token } = event;
-  // Checks if person has token
-  if (!token) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'Missing required authentication: token'
-      }),
-    };
-  }
-
-  const {role } = jwt.verify(token, process.env.JWT_SECRET_KEY);
-  // Checks if person has a role
-  if (!role) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'Invalid token payload'
-      }),
-    };
-  }
-  // Checks if person has the Admin role
-  if (role !== 'Admin') {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: 'Incorrect role'
-      }),
-    };
   }
 
   try {
