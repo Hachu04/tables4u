@@ -25,10 +25,12 @@ export default function RestaurantLoginPage() {
       password: restaurantPassword,
     };
 
+    console.log(credential)
+
+    setLoading(true);
     try {
       setErrorMessage('');
       setResponseMsg('');
-      setLoading(true);
       // Make API call to create the restaurant
       const response = await instance.post('loginRestaurant', credential);
 
@@ -44,6 +46,7 @@ export default function RestaurantLoginPage() {
         setRestaurantPassword('');
       } else {
         const parsedBody = JSON.parse(body);
+        console.log(response)
         setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
       }
     } catch (error) {
