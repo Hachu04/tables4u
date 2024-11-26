@@ -141,6 +141,8 @@ export default function RestaurantManagerDashboard() {
 
   const handleEditRestaurantClick = () => {
     setShowEditPopup(true);
+    setResponseMsg('');
+    setErrorMessage('');
   };
 
   const handleCloseEditRestaurantPopup = () => {
@@ -294,6 +296,8 @@ export default function RestaurantManagerDashboard() {
 
   const handleActivateRestaurantClick = () => {
     setShowActivatePopup(true);
+    setResponseMsg('');
+    setErrorMessage('');
   };
 
   const handleCloseActivateRestaurantPopup = () => {

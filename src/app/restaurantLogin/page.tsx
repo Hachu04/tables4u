@@ -88,7 +88,7 @@ export default function RestaurantLoginPage() {
             type="email"
             value={restaurantEmail}
             onChange={(e) => setRestaurantEmail(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
@@ -100,7 +100,7 @@ export default function RestaurantLoginPage() {
             type="password"
             value={restaurantPassword}
             onChange={(e) => setRestaurantPassword(e.target.value)}
-            className="input-field"
+            className="input-field border-2 border-gray-300 rounded px-3 py-2"
             required
           />
         </div>
