@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import LoadingSpinner from '../utils/LoadingSpinner';
+import Link from 'next/link';
 
 const instance = axios.create({
   baseURL: 'https://g8lcsp3jlc.execute-api.us-east-2.amazonaws.com/Initial/'
@@ -90,6 +91,10 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Clear token
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
@@ -113,6 +118,14 @@ export default function AdminDashboard() {
       {showRestaurants && restaurants.length > 0 && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
+          <Link href='/'>
+            <button
+              className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </Link>
           <ul className="list-disc pl-5">
             {restaurants.map((restaurant, index) => (
               <li key={index} className="mb-2">
