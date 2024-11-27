@@ -15,7 +15,7 @@ export const handler = async (event) => {
 
     return new Promise((resolve, reject) => {
 
-        pool.query("SELECT resId, name, isActive FROM Restaurant WHERE isActive = 1", [], (error, rows) => {
+        pool.query("SELECT resId, name, isActive FROM Restaurant WHERE isActive = 1;", [], (error, rows) => {
 
             if (error) { 
               return reject(error); 
