@@ -30,7 +30,7 @@ export default function consumerDashboard(){
             // Call your Lambda function endpoint 
             const response = await instance.get('consumerListRestaurant')
             // Update webpage with the restaurant data
-            setRestaurants(response.data.restaurant);
+            setRestaurants(response.data.body);
             setShowRestaurants(true);
 
         } catch (error){
