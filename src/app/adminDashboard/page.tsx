@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LoadingSpinner from '../utils/LoadingSpinner';
+import Link from 'next/link';
 
 const instance = axios.create({
   baseURL: 'https://g8lcsp3jlc.execute-api.us-east-2.amazonaws.com/Initial/'
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showRestaurants, setShowRestaurants] = useState(false);
+  const [fetchTrigger, setFetchTrigger] = useState(false);
 
   // Fetch restaurant data using token from localStorage
   const fetchRestaurantData = async () => {
@@ -57,12 +59,9 @@ export default function AdminDashboard() {
         token,
       });
 
-      if (response.data.success) {
-        // Immediately remove the restaurant from the list on success
-        setRestaurants((prevRestaurants) =>
-          prevRestaurants.filter((restaurant) => restaurant.name !== restaurantName)
-        );
+      if (response.data.statusCode === 200) {
         setSuccess(`Restaurant "${restaurantName}" deleted successfully.`);
+        setFetchTrigger(true);
       } else {
         // If deletion fails, show error message
         setError('Failed to delete restaurant. Please try again.');
@@ -73,6 +72,13 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (fetchTrigger) {
+      fetchRestaurantData();
+      setFetchTrigger(false);
+    }
+  })
 
   // Handle Axios errors
   const handleAxiosError = (err: unknown) => {
@@ -90,16 +96,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Clear token
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      <Link href='/'>
+        <button
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </Link>
 
       {/* Display success or error message */}
       {success && <p className="mt-4 text-green-500">{success}</p>}
       {error && <p className="mt-4 text-red-500">{error}</p>}
 
-      {/* Loading spinner */}
-      {loading && <LoadingSpinner />}
+      
 
       {/* List Restaurants button always visible */}
       <button
@@ -109,8 +126,11 @@ export default function AdminDashboard() {
         List Restaurants
       </button>
 
+      {/* Loading spinner */}
+      {loading && <LoadingSpinner />}
+
       {/* Show restaurant list after fetch */}
-      {showRestaurants && restaurants.length > 0 && (
+      {showRestaurants && restaurants && restaurants.length > 0 && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
           <ul className="list-disc pl-5">

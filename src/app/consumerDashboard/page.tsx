@@ -23,7 +23,7 @@ export default function consumerDashboard(){
             setError(null);   // Reset any previous errors
 
             // Call your Lambda function endpoint 
-            const response = await instance.get('consumerListRestaurants')
+            const response = await instance.get('consumerListRestaurant')
 
             // Update webpage with the restaurant data
             setRestaurants(response.data.restaurant);
@@ -91,7 +91,7 @@ export default function consumerDashboard(){
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
 
-            {restaurants.length > 0 && (
+            {restaurants && restaurants.length > 0 && (
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
                     <ul className="list-disc pl-5">
