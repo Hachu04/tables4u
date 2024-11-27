@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 
@@ -14,6 +14,11 @@ export default function consumerDashboard(){
     const [error, setError] = useState<string | null>(null);
     const [showRestaurants, setShowRestaurants] = useState(false);
 
+    // Automatically shows any active restaurants when consumers click on consumer dashboard from landing page
+    useEffect(() => {
+        getActiveRestaurants();
+    }, []);
+
     // Get active restaurant names from database
     const getActiveRestaurants = async () => {
 
@@ -24,8 +29,6 @@ export default function consumerDashboard(){
 
             // Call your Lambda function endpoint 
             const response = await instance.get('consumerListRestaurant')
-
-            console.log(response)
             // Update webpage with the restaurant data
             setRestaurants(response.data.body);
             setShowRestaurants(true);
@@ -92,7 +95,7 @@ export default function consumerDashboard(){
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
 
-            {restaurants && restaurants.length > 0 && (
+            {showRestaurants && restaurants && restaurants.length > 0 ? (
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
                     <ul className="list-disc pl-5">
@@ -105,6 +108,13 @@ export default function consumerDashboard(){
 
                     </ul>
                 </div>
+            ) : (
+                <p className="mt-4 text-gray-500">
+                {!restaurants || restaurants.length == 0
+                    ? 'No restaurants available currently. Click list restaurants to see any updates.'
+                    : 'Please wait...'
+                }
+                </p>
             )}
 
         </div>
