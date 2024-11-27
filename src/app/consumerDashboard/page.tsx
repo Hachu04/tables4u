@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
 
 const instance = axios.create({
     baseURL: 'https://0mjckhjhy0.execute-api.us-east-2.amazonaws.com/Initial'
@@ -11,6 +12,7 @@ export default function consumerDashboard(){
     const [restaurants, setRestaurants] = useState<{ name: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showRestaurants, setShowRestaurants] = useState(false);
 
     // Get active restaurant names from database
     const getActiveRestaurants = async () => {
@@ -21,10 +23,11 @@ export default function consumerDashboard(){
             setError(null);   // Reset any previous errors
 
             // Call your Lambda function endpoint 
-            const response = await instance.post('consumerListRestaurants')
+            const response = await instance.get('consumerListRestaurants')
 
             // Update webpage with the restaurant data
             setRestaurants(response.data.restaurant);
+            setShowRestaurants(true);
 
         } catch (error){
             // Check what type of error might get
@@ -75,6 +78,14 @@ export default function consumerDashboard(){
             >
                 List Restaurants
             </button>
+
+            <div className="absolute bottom-4 left-4">
+                <Link href="/">
+                    <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                        &larr; Return to Landing Page
+                    </button>
+                </Link>
+            </div>
 
             {loading && <p className="mt-4 text-gray-500">Loading...</p>}
 
