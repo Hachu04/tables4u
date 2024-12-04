@@ -72,7 +72,7 @@ export const handler = async (event) => {
   
 
   let generateConfirmationCode = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const characters = '0123456789';
     let confirmationCode = '';
     for (let i = 0; i < 6; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
@@ -81,10 +81,26 @@ export const handler = async (event) => {
     return confirmationCode;
   }
 
-  function validateEmail(email) {
+  let validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   }
+
+  let validateReservedTime = (reservedTime) => {
+    const now = new Date(); // Current date and time
+    const reservationDate = new Date(reservedTime);
+  
+    if (isNaN(reservationDate.getTime())) {
+      return false;
+    }
+  
+    if (reservationDate <= now) {
+      return false;
+    }
+
+    return true;
+  };
+  
 
   // Extract the necessary fields from the event
   const { email, name, resId, tableNum, numGuests, reservedTime } = event;
@@ -103,6 +119,15 @@ export const handler = async (event) => {
       statusCode: 400,
       body: JSON.stringify({
         error: 'numGuests must be 1-8'
+      }),
+    };
+  }
+
+  if (!validateReservedTime(reservedTime)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Reserved time must be in the future'
       }),
     };
   }
