@@ -3,6 +3,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import LoadingSpinner from '../utils/LoadingSpinner';
+import { EditRestaurantPopup } from './components/EditRestaurantPopup';
+import { EditTablesPopup } from './components/EditTablesPopup';
+import { ActivateRestaurantPopup } from './components/ActivateRestaurantPopup';
+import { DeleteRestaurantPopup } from './components/DeleteRestaurantPopup';
 
 // API instance for making requests
 const instance = axios.create({
@@ -589,283 +593,52 @@ export default function RestaurantManagerDashboard() {
 
       {/* Edit Restaurant Popup */}
       {showEditPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Edit Restaurant</h2>
-            <form className="space-y-4">
-              {/* Restaurant Name Field */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Restaurant Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={restaurantData.name}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                  placeholder="Enter restaurant name"
-                />
-              </div>
-
-              {/* Address */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={restaurantData.address}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                  placeholder="Enter restaurant address"
-                />
-              </div>
-
-              {/* Hours of Operation Field */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Hours of Operation
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    name="openingHour"
-                    value={restaurantData.openingHour}
-                    onChange={handleInputChange}
-                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                    placeholder="Opening hour"
-                  />
-                  <input
-                    type="text"
-                    name="closingHour"
-                    value={restaurantData.closingHour}
-                    onChange={handleInputChange}
-                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                    placeholder="Closing hour"
-                  />
-                </div>
-              </div>
-            </form>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
-                onClick={handleCloseEditRestaurantPopup}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-                onClick={handleSaveChanges}
-              >
-                Save Changes
-              </button>
-            </div>
-
-            {/* Display API response message */}
-            {loading && <LoadingSpinner />}
-            {responseMsg ? (
-              <div className="mt-8 p-4 border rounded bg-green-50">
-                <h2 className="text-xl font-semibold mb-2">Success!</h2>
-                <p>{responseMsg}</p>
-
-                <button
-                  className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-                  onClick={handleCloseEditRestaurantPopup}
-                >
-                  Close
-                </button>
-
-              </div>
-            ) : errorMessage ? (
-              <div className="mt-8 p-4 border rounded bg-red-50">
-                <h2 className="text-xl font-semibold mb-2">Error</h2>
-                <p>{errorMessage}</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        <EditRestaurantPopup
+          restaurantData={restaurantData}
+          onClose={handleCloseEditRestaurantPopup}
+          onSave={handleSaveChanges}
+          onInputChange={handleInputChange}
+          loading={loading}
+          responseMsg={responseMsg}
+          errorMessage={errorMessage}
+        />
       )}
 
       {/* Activate Restaurant Popup */}
       {showActivatePopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Activate Restaurant?</h2>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
-                onClick={handleCloseActivateRestaurantPopup}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-                onClick={handleConfirmActivate}
-              >
-                Confirm
-              </button>
-            </div>
-
-            {/* Display API response message */}
-            {loading && <LoadingSpinner />}
-            {responseMsg ? (
-              <div className="mt-8 p-4 border rounded bg-green-50">
-                <h2 className="text-xl font-semibold mb-2">Success!</h2>
-                <p>{responseMsg}</p>
-
-                <button
-                  className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-                  onClick={handleCloseActivateRestaurantPopup}
-                >
-                  Close
-                </button>
-
-              </div>
-            ) : errorMessage ? (
-              <div className="mt-8 p-4 border rounded bg-red-50">
-                <h2 className="text-xl font-semibold mb-2">Error</h2>
-                <p>{errorMessage}</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        <ActivateRestaurantPopup
+          onClose={handleCloseActivateRestaurantPopup}
+          onConfirm={handleConfirmActivate}
+          loading={loading}
+          responseMsg={responseMsg}
+          errorMessage={errorMessage}
+        />
       )}
 
       {/* Edit Table Popup */}
       {showEditTablePopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Edit Tables</h2>
-            <form className="space-y-4">
-              {/* Add Table Field */}
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Add Table
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={newTable.tableNum}
-                    name="tableNum"
-                    placeholder="Table Number"
-                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                    onChange={(e) => setNewTable({ ...newTable, tableNum: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    value={newTable.numSeats}
-                    name="numSeats"
-                    placeholder="Seats"
-                    className="w-1/2 border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
-                    onChange={(e) => setNewTable({ ...newTable, numSeats: e.target.value })}
-                  />
-                </div>
-              </div>
-            </form>
-
-            {/* Existing Tables */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">Existing Tables</h3>
-              <ul className="space-y-4">
-                {tables.map((table) => (
-                  <li key={table.tableNum} className="flex justify-between items-center">
-                    <span>
-                      Table {table.tableNum} - {table.numSeats} seats
-                    </span>
-                    <button
-                      className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600 transition"
-                      onClick={() => deleteTable(table.tableNum)}
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Display API response message */}
-            {loading && <LoadingSpinner />}
-            {responseMsg ? (
-              <div className="mt-8 p-4 border rounded bg-green-50">
-                <h2 className="text-xl font-semibold mb-2">Success!</h2>
-                <p>{responseMsg}</p>
-              </div>
-            ) : errorMessage ? (
-              <div className="mt-8 p-4 border rounded bg-red-50">
-                <p>{errorMessage}</p>
-              </div>
-            ) : null}
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center mt-6">
-              <button
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-                onClick={createTable}
-              >
-                Add Table
-              </button>
-              <button
-                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
-                onClick={handleCloseEditTablePopup}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditTablesPopup
+          tables={tables}
+          newTable={newTable}
+          onNewTableChange={(e) => setNewTable({ ...newTable, [e.target.name]: e.target.value })}
+          onAddTable={createTable}
+          onDeleteTable={deleteTable}
+          onClose={handleCloseEditTablePopup}
+          loading={loading}
+          responseMsg={responseMsg}
+          errorMessage={errorMessage}
+        />
       )}
 
       {/* Delete Restaurant Popup */}
       {showDeletePopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Delete Restaurant?</h2>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
-                onClick={handleCancelDeleteRestaurant}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-                onClick={handleConfirmDelete}
-              >
-                Confirm
-              </button>
-            </div>
-
-            {/* Display API response message */}
-            {loading && <LoadingSpinner />}
-            {responseMsg ? (
-              <div className="mt-8 p-4 border rounded bg-green-50">
-                <h2 className="text-xl font-semibold mb-2">Success!</h2>
-                <p>{responseMsg}</p>
-
-                <Link href='/'>
-                  <button
-                    className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-                  >
-                    Back to Landing Page
-                  </button>
-                </Link>
-              </div>
-            ) : errorMessage ? (
-              <div className="mt-8 p-4 border rounded bg-red-50">
-                <h2 className="text-xl font-semibold mb-2">Error</h2>
-                <p>{errorMessage}</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        <DeleteRestaurantPopup
+          onClose={handleCancelDeleteRestaurant}
+          onConfirm={handleConfirmDelete}
+          loading={loading}
+          responseMsg={responseMsg}
+          errorMessage={errorMessage}
+        />
       )}
     </div>
   );
