@@ -16,9 +16,9 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold text-center mb-4">Admin</h2>
           <Link href="/adminLogin">
-          <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-            Admin Login
-          </button>
+            <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+              Admin Login
+            </button>
           </Link>
         </div>
 
@@ -30,7 +30,7 @@ export default function Home() {
               Restaurant Manager Login
             </button>
           </Link>
-          
+
           <Link href="/createRestaurant">
             <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
               Create New Restaurant
@@ -41,14 +41,17 @@ export default function Home() {
         {/* Consumer Column */}
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold text-center mb-4">Consumer</h2>
-          <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-            Find Existing Reservation
-          </button>
-        <Link href = "/consumerDashboard">
-          <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
-            Go to Consumer Dashboard
-          </button>
-        </Link>
+          <Link href="/findReservation">
+            <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+              Find Existing Reservation
+            </button>
+          </Link>
+          
+          <Link href="/consumerDashboard">
+            <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+              Go to Consumer Dashboard
+            </button>
+          </Link>
         </div>
       </div>
     </div>
