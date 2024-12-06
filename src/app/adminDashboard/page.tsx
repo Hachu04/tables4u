@@ -10,14 +10,19 @@ const instance = axios.create({
 
 export default function AdminDashboard() {
   const [restaurants, setRestaurants] = useState<{ name: string; isActive: number }[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]); // For reservations
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showRestaurants, setShowRestaurants] = useState(false);
-  const [fetchTrigger, setFetchTrigger] = useState(false);
+  const [showReservations, setShowReservations] = useState(false); // For reservations
 
-  // Fetch restaurant data using token from localStorage
-  const fetchRestaurantData = async () => {
+  // Fetch data helper
+  const fetchData = async (
+    endpoint: string,
+    onSuccess: (data: any) => void,
+    toggleVisibility: () => void
+  ) => {
     try {
       setLoading(true);
       setError(null);
@@ -30,9 +35,9 @@ export default function AdminDashboard() {
         return;
       }
 
-      const response = await instance.post('adminListRestaurant', { token });
-      setRestaurants(response.data.restaurant);
-      setShowRestaurants(true);
+      const response = await instance.post(endpoint, { token });
+      onSuccess(response.data);
+      toggleVisibility();
     } catch (err) {
       handleAxiosError(err);
     } finally {
@@ -40,45 +45,29 @@ export default function AdminDashboard() {
     }
   };
 
-  // Delete a restaurant and trigger re-fetch
-  const handleDeleteRestaurant = async (restaurantName: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(null);
-
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Authentication token missing. Please log in.');
-        setLoading(false);
-        return;
+  // Fetch restaurants
+  const fetchRestaurantData = () => {
+    fetchData(
+      'adminListRestaurant',
+      (data) => setRestaurants(data.restaurant),
+      () => {
+        setShowRestaurants(true);
+        setShowReservations(false);
       }
-
-      const response = await instance.post('adminDeleteRestaurant', {
-        name: restaurantName,
-        token,
-      });
-
-      if (response.data.statusCode === 200) {
-        setSuccess(`Restaurant "${restaurantName}" deleted successfully.`);
-        setFetchTrigger(true);
-      } else {
-        // If deletion fails, show error message
-        setError('Failed to delete restaurant. Please try again.');
-      }
-    } catch (err) {
-      handleAxiosError(err);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
-  useEffect(() => {
-    if (fetchTrigger) {
-      fetchRestaurantData();
-      setFetchTrigger(false);
-    }
-  })
+  // Fetch reservations
+  const fetchReservationsData = () => {
+    fetchData(
+      'adminListReservation',
+      (data) => setReservations(data.reservation),
+      () => {
+        setShowReservations(true);
+        setShowRestaurants(false);
+      }
+    );
+  };
 
   // Handle Axios errors
   const handleAxiosError = (err: unknown) => {
@@ -116,9 +105,7 @@ export default function AdminDashboard() {
       {success && <p className="mt-4 text-green-500">{success}</p>}
       {error && <p className="mt-4 text-red-500">{error}</p>}
 
-      
-
-      {/* List Restaurants button always visible */}
+      {/* List Restaurants button */}
       <button
         onClick={fetchRestaurantData}
         className="w-full bg-green-500 text-white py-3 rounded hover:bg-blue-600 transition"
@@ -126,11 +113,19 @@ export default function AdminDashboard() {
         List Restaurants
       </button>
 
+      {/* List Reservations button */}
+      <button
+        onClick={fetchReservationsData}
+        className="w-full bg-blue-500 text-white py-3 rounded hover:bg-green-600 transition mt-4"
+      >
+        List Reservations
+      </button>
+
       {/* Loading spinner */}
       {loading && <LoadingSpinner />}
 
       {/* Show restaurant list after fetch */}
-      {showRestaurants && restaurants && restaurants.length > 0 && (
+      {showRestaurants && restaurants.length > 0 && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
           <ul className="list-disc pl-5">
@@ -146,12 +141,20 @@ export default function AdminDashboard() {
                 >
                   {restaurant.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
-                <button
-                  onClick={() => handleDeleteRestaurant(restaurant.name)}
-                  className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 transition"
-                >
-                  Delete Restaurant
-                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Show reservation list after fetch */}
+      {showReservations && reservations.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Reservations:</h2>
+          <ul className="list-disc pl-5">
+            {reservations.map((reservation, index) => (
+              <li key={index} className="mb-2">
+                Reservation ID: {reservation.rsvId}, Email: {reservation.email}, Guests: {reservation.numGuest}, Time: {reservation.reservedTime}
               </li>
             ))}
           </ul>
