@@ -13,10 +13,14 @@ export default function consumerDashboard(){
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showRestaurants, setShowRestaurants] = useState(false);
+    const [fetchRestaurantTrigger, setFetchRestaurantTrigger] = useState(true);
 
     // Automatically shows any active restaurants when consumers click on consumer dashboard from landing page
     useEffect(() => {
-        getActiveRestaurants();
+        if (fetchRestaurantTrigger) {
+            getActiveRestaurants();
+            setFetchRestaurantTrigger(false);
+        }
     }, []);
 
     // Get active restaurant names from database
@@ -68,6 +72,10 @@ export default function consumerDashboard(){
 
     }
 
+    const handleListRestaurant = () => {
+        setFetchRestaurantTrigger(true);
+    }
+
     return(
 
         <div className = "p-4">
@@ -77,7 +85,7 @@ export default function consumerDashboard(){
             </h1>
 
             <button 
-                onClick = {getActiveRestaurants}
+                onClick = {handleListRestaurant}
                 className="w-full bg-green-500 text-white py-3 rounded hover:bg-blue-600 transition"
             >
                 List Restaurants
