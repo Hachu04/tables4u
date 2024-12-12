@@ -106,6 +106,13 @@ export default function FindReservationPage() {
         <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
             <div className="bg-white p-6 rounded shadow-lg w-96">
                 <h2 className="text-xl font-semibold mb-4">Find Existing Reservation</h2>
+                <Link href='/'>
+                    <button
+                        className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+                    >
+                        Return to Landing page
+                    </button>
+                </Link>
                 <form className="space-y-4">
                     <div>
                         <label className="block text-gray-700 font-medium mb-2">Email</label>
