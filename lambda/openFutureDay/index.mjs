@@ -32,18 +32,21 @@ export const handler = async (event) => {
     });
   };
 
-  let CloseRestaurant = (resId, date) => {
+  //CHECK FOR DUPLICATE ENTRY
+  let OpenRestaurant = (resId, date) => {
     return new Promise((resolve, reject) => {
-      const query = "INSERT INTO ClosedDays (resId,day) VALUES (?,?);";
-
       pool.query(
-        query,
+        "DELETE FROM ClosedDays WHERE resId=? AND date=?;",
         [resId, date],
         (error, rows) => {
           if (error) {
             return reject(error);
           }
-          return resolve(rows);
+          if ((rows) && (rows.affectedRows == 1)) {
+            return resolve(true);
+          } else {
+            return resolve(false);
+          }
         }
       );
     });
@@ -86,7 +89,7 @@ export const handler = async (event) => {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Closed day must be in the future'
+        error: 'Opening day must be in the future'
       }),
     };
   }
@@ -116,32 +119,31 @@ export const handler = async (event) => {
   try {
     // Fetch closed day data based on manager's email
     const resId = await GetResId(email);
-    await CloseRestaurant(resId, date);
+    const result = await OpenRestaurant(resId, date);
 
-    response = {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Restaurant has been closed on ' + date
-      }),
-    }
-  } catch (error) {
-    console.error('Error closing restaurant:', error);
-
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (result) {
       response = {
-        statusCode: 400,
+        statusCode: 200,
         body: JSON.stringify({
-          error: 'Restaurant already closed'
-        }),
+          message: 'Restaurant has been opened on ' + date
+        })
       }
     } else {
       response = {
         statusCode: 400,
         body: JSON.stringify({
-          error: error.message,
-        }),
-      };
+          error: 'Restaurant is already opened on ' + date
+        })
+      }
     }
+
+  } catch (error) {
+    response = {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: error.message,
+      }),
+    };
   }
 
   // Close the DB connections
