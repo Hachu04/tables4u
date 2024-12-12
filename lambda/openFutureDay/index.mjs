@@ -36,7 +36,7 @@ export const handler = async (event) => {
   let OpenRestaurant = (resId, date) => {
     return new Promise((resolve, reject) => {
       pool.query(
-        "DELETE FROM ClosedDays WHERE resId=? AND date=?;",
+        "DELETE FROM ClosedDays WHERE resId=? AND day=?;",
         [resId, date],
         (error, rows) => {
           if (error) {
