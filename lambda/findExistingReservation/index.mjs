@@ -51,7 +51,7 @@ export const handler = async (event) => {
     if (!reservation) {
       // If no reservation found
       return {
-        statusCode: 404,
+        statusCode: 400,
         body: JSON.stringify({ error: "Reservation not found" }),
       };
     }

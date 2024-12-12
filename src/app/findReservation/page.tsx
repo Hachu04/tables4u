@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
+import LoadingSpinner from '../utils/LoadingSpinner';
 
 const instance = axios.create({
     baseURL: 'https://0mjckhjhy0.execute-api.us-east-2.amazonaws.com/Initial'
@@ -13,6 +15,7 @@ export default function FindReservationPage() {
     });
     const [loading, setLoading] = useState(false);
     const [reservationDetails, setReservationDetails] = useState<any | null>(null);
+    const [responseMsg, setResponseMsg] = useState('')
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,13 +30,20 @@ export default function FindReservationPage() {
         try {
             setLoading(true);
             setReservationDetails(null);
+            setResponseMsg('');
             setErrorMessage(null);
 
+            const vars = {
+                email: reservationInfo.email,
+                confirmationCode: reservationInfo.confirmationCode
+            }
+
             // Make API request
-            const response = await instance.post('/findExistingReservation', reservationInfo);
+            const response = await instance.post('/findExistingReservation', vars);
 
             if (response.data.statusCode === 200) {
                 const data = JSON.parse(response.data.body);
+                console.log(data);
                 setReservationDetails(data);
             } else {
                 setErrorMessage(JSON.parse(response.data.body));
@@ -52,20 +62,32 @@ export default function FindReservationPage() {
     };
 
     const handleDeleteReservation = async () => {
-        if (!reservationDetails) return;
-
+        if (!reservationDetails) {
+            console.error('No reservation found!');
+            return;
+        }
         try {
             setLoading(true);
+            setResponseMsg('');
             setErrorMessage(null);
 
-            // Make delete request
-            const response = await instance.post(`/deleteReservation`, reservationDetails.rsvId);
+            const vars = {
+                rsvId: reservationDetails.rsvId
+            }
 
-            if (response.data.statusCode === 200) {
+            // Make delete request
+            console.log(reservationDetails.rsvId);
+            const response = await instance.post(`/consumerCancelReservation`, vars);
+
+            const { statusCode, body } = response.data;
+            console.log(JSON.stringify(response));
+
+            if (statusCode === 200) {
                 setReservationDetails(null);
-                alert('Reservation deleted successfully!');
+                setResponseMsg('Reservation deleted successfully!');
             } else {
-                setErrorMessage(JSON.parse(response.data.body));
+                const parsedBody = JSON.parse(body);
+                setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -138,12 +160,24 @@ export default function FindReservationPage() {
                         </button>
                     </div>
                 )}
-                {errorMessage && (
+                {/* Display API response message */}
+                {loading && <LoadingSpinner />}
+                {responseMsg ? (
+                    <div className="mt-8 p-4 border rounded bg-green-50">
+                        <h2 className="text-xl font-semibold mb-2">Success!</h2>
+                        <p>{responseMsg}</p>
+                        <Link href="/consumerDashboard">
+                            <button className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition">
+                                Go to Consumer Dashboard
+                            </button>
+                        </Link>
+                    </div>
+                ) : errorMessage ? (
                     <div className="mt-8 p-4 border rounded bg-red-50">
                         <h2 className="text-xl font-semibold mb-2">Error</h2>
                         <p>{errorMessage}</p>
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );
