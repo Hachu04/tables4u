@@ -16,7 +16,44 @@ export default function EditFutureDayPage() {
     const [loading, setLoading] = useState(false);
 
     const handleOpenClick = async () => {
+        if (!calendarDate) {
+            console.error('No date found!');
+            return;
+        }
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
 
+            const vars = {
+                token: token,
+                date: calendarDate
+            }
+
+            console.log(calendarDate);
+            const response = await instance.post('openFutureDay', vars);
+
+            const { statusCode, body } = response.data;
+            console.log(JSON.stringify(response));
+
+            if (statusCode === 200) {
+                setResponseMsg("Success! Restaurant opened on " + calendarDate);
+            } else {
+                const parsedBody = JSON.parse(body);
+                setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                const errorData = error.response.data;
+                setErrorMessage(
+                    errorData.message || 'Failed to open restaurant.'
+                );
+            } else {
+                setErrorMessage('An unexpected error occurred.');
+            }
+            setResponseMsg('');
+        } finally {
+            setLoading(false);
+        }
     }
 
     const handleCloseClick = async () => {
