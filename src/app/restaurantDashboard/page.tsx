@@ -569,12 +569,15 @@ export default function RestaurantManagerDashboard() {
           </button>
 
           {/* Review Availability Button */}
-          <button
-            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-            style={{ visibility: activeVisibility() }}
-          >
-            Review Availability
-          </button>
+          <Link href='/restaurantDashboard/reviewAvailability'>
+            <button
+              className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+              style={{ visibility: activeVisibility() }}
+            >
+              Review Availability
+            </button>
+          </Link>
+          
 
           <Link href="/restaurantDashboard/editFutureDay">
             {/* Open/Reopen Button */}

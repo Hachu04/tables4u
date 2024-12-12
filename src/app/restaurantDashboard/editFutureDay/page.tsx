@@ -113,9 +113,9 @@ export default function EditFutureDayPage() {
         <main className="flex min-h-screen flex-col items-center justify-center py-8">
             {/* Return Button */}
             <div className="absolute top-4 left-4">
-                <Link href="/">
+                <Link href="/restaurantDashboard">
                     <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                        &larr; Return to Landing Page
+                        &larr; Return
                     </button>
                 </Link>
             </div>

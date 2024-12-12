@@ -40,14 +40,18 @@ export default function FindReservationPage() {
 
             // Make API request
             const response = await instance.post('/findExistingReservation', vars);
+            console.log(JSON.parse(response.data.body));
 
-            if (response.data.statusCode === 200) {
+            if (response.data.statusCode === 400) {
+                const body = JSON.parse(response.data.body)
+                setErrorMessage(body.error);
+            } else if (response.data.statusCode === 200) {
                 const data = JSON.parse(response.data.body);
-                console.log(data);
                 setReservationDetails(data);
             } else {
-                setErrorMessage(JSON.parse(response.data.body));
+                setErrorMessage('An unexpected error occurred. Please try again.');
             }
+
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 setErrorMessage(
@@ -151,8 +155,12 @@ export default function FindReservationPage() {
                         Find
                     </button>
                 </div>
-                {loading && <p className="mt-4 text-gray-500">Loading...</p>}
-                {reservationDetails && (
+                {loading && (
+                    <div className="flex items-center mt-4">
+                        <LoadingSpinner />
+                    </div>
+                )}
+                {!loading && reservationDetails && (
                     <div className="mt-8 p-4 border rounded bg-green-50">
                         <h2 className="text-xl font-semibold mb-2">Reservation Details</h2>
                         <p><strong>Restaurant:</strong> {reservationDetails.resName}</p>
@@ -167,8 +175,6 @@ export default function FindReservationPage() {
                         </button>
                     </div>
                 )}
-                {/* Display API response message */}
-                {loading && <LoadingSpinner />}
                 {responseMsg ? (
                     <div className="mt-8 p-4 border rounded bg-green-50">
                         <h2 className="text-xl font-semibold mb-2">Success!</h2>
@@ -185,6 +191,7 @@ export default function FindReservationPage() {
                         <p>{errorMessage}</p>
                     </div>
                 ) : null}
+
             </div>
         </div>
     );
