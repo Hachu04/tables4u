@@ -85,11 +85,14 @@ export const handler = async (event) => {
   const inputDate = new Date(date);
   const curDate = new Date();
 
-  if (inputDate.getUTCDate() <= curDate.getUTCDate()) {
+  const tomorrow = new Date(Date.UTC(curDate.getUTCFullYear(), curDate.getUTCMonth(), curDate.getUTCDate() + 1));
+  const closeDateUTC = new Date(Date.UTC(inputDate.getUTCFullYear(), inputDate.getUTCMonth(), inputDate.getUTCDate()));
+
+  if (closeDateUTC < tomorrow) {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Opening day must be in the future'
+        error: 'Closing day must be in the future'
       }),
     };
   }
