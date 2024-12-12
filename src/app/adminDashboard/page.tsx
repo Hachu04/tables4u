@@ -85,6 +85,48 @@ export default function AdminDashboard() {
     }
   };
 
+  // Handle restaurant deletion
+  const handleDeleteRestaurant = async (name: string) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token missing. Please log in.');
+        setLoading(false);
+        return;
+      }
+
+      await instance.post('adminDeleteRestaurant', { name, token });
+      setSuccess('Restaurant deleted successfully.');
+      fetchRestaurantData(); // Refresh restaurant list
+    } catch (err) {
+      handleAxiosError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle reservation cancellation
+  const handleCancelReservation = async (rsvId: string) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token missing. Please log in.');
+        setLoading(false);
+        return;
+      }
+
+      await instance.post('adminCancelReservation', { rsvId, token });
+      setSuccess('Reservation cancelled successfully.');
+      fetchReservationsData(); // Refresh reservation list
+    } catch (err) {
+      handleAxiosError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('authToken'); // Clear token
   };
@@ -141,6 +183,12 @@ export default function AdminDashboard() {
                 >
                   {restaurant.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
+                <button
+                  className="bg-red-500 text-white py-1 px-2 ml-4 rounded hover:bg-red-600 transition"
+                  onClick={() => handleDeleteRestaurant(restaurant.name)}
+                >
+                  Delete Restaurant
+                </button>
               </li>
             ))}
           </ul>
@@ -155,6 +203,12 @@ export default function AdminDashboard() {
             {reservations.map((reservation, index) => (
               <li key={index} className="mb-2">
                 Reservation ID: {reservation.rsvId}, Email: {reservation.email}, Guests: {reservation.numGuest}, Time: {reservation.reservedTime}
+                <button
+                  className="bg-red-500 text-white py-1 px-2 ml-4 rounded hover:bg-red-600 transition"
+                  onClick={() => handleCancelReservation(reservation.rsvId)}
+                >
+                  Cancel Reservation
+                </button>
               </li>
             ))}
           </ul>
