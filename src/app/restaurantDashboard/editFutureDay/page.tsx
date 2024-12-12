@@ -15,6 +15,12 @@ export default function EditFutureDayPage() {
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const [redraw, forceRedraw] = React.useState(0);
+
+    const andRefreshDisplay = () => {
+        forceRedraw(redraw + 1)
+    }
+
     const handleOpenClick = async () => {
         if (!calendarDate) {
             console.error('No date found!');
@@ -37,10 +43,13 @@ export default function EditFutureDayPage() {
 
             if (statusCode === 200) {
                 setResponseMsg("Success! Restaurant opened on " + calendarDate);
+                setErrorMessage("");
             } else {
                 const parsedBody = JSON.parse(body);
+                setResponseMsg("");
                 setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
             }
+            andRefreshDisplay();
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 const errorData = error.response.data;
@@ -78,10 +87,13 @@ export default function EditFutureDayPage() {
 
             if (statusCode === 200) {
                 setResponseMsg("Success! Restaurant closed on " + calendarDate);
+                setErrorMessage("");
             } else {
                 const parsedBody = JSON.parse(body);
+                setResponseMsg("");
                 setErrorMessage(parsedBody.error || 'An unexpected error occurred.');
             }
+            andRefreshDisplay();
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 const errorData = error.response.data;
