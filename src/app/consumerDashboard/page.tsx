@@ -87,10 +87,18 @@ export default function consumerDashboard() {
     return (
 
         <div className="p-4">
+            <div className='flex justify-between'>
+                <h1 className="text-2xl font-bold mb-4">
+                    Consumer Dashboard
+                </h1>
 
-            <h1 className="text-2xl font-bold mb-4">
-                Consumer Dashboard
-            </h1>
+                <Link href="/">
+                    <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                        &larr; Return to Landing Page
+                    </button>
+                </Link>
+            </div>
+
             <div className="flex justify-center">
                 <div className="w-3/4 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="flex flex-col">
@@ -154,11 +162,7 @@ export default function consumerDashboard() {
             </button>
 
             <div className="absolute bottom-4 left-4">
-                <Link href="/">
-                    <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                        &larr; Return to Landing Page
-                    </button>
-                </Link>
+
             </div>
 
             {loading && <p className="mt-4 text-gray-500">Loading...</p>}
