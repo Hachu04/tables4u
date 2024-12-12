@@ -318,9 +318,9 @@ export default function RestaurantManagerDashboard() {
   };
 
   const handleCancelDeleteRestaurant = () => {
-    setShowDeletePopup(false);   
+    setShowDeletePopup(false);
     setErrorMessage('');
-    setResponseMsg(''); 
+    setResponseMsg('');
   }
 
   const handleSaveChanges = async () => {
@@ -576,13 +576,15 @@ export default function RestaurantManagerDashboard() {
             Review Availability
           </button>
 
-          {/* Open/Reopen Button */}
-          <button
-            className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
-            style={{ visibility: activeVisibility() }}
-          >
-            Open/Reopen
-          </button>
+          <Link href="/restaurantDashboard/editFutureDay">
+            {/* Open/Reopen Button */}
+            <button
+              className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+              style={{ visibility: activeVisibility() }}
+            >
+              Open/Reopen
+            </button>
+          </Link>
 
           {/* Delete Restaurant Button */}
           <button onClick={handleDeleteRestaurantClick} className="w-full bg-red-500 text-white py-3 rounded hover:bg-red-600 transition">
