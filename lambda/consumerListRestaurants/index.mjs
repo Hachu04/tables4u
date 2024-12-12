@@ -15,14 +15,14 @@ export const handler = async (event) => {
 
     return new Promise((resolve, reject) => {
 
-        pool.query("SELECT resId, name, isActive FROM Restaurant WHERE isActive = 1;", [], (error, rows) => {
+      pool.query("SELECT resId, name, address, isActive, openingHour, closingHour FROM Restaurant WHERE isActive = 1;", [], (error, rows) => {
 
-            if (error) { 
-              return reject(error); 
-            }
-            return resolve(rows);
+        if (error) {
+          return reject(error);
+        }
+        return resolve(rows);
 
-        })
+      })
 
     })
 
@@ -31,25 +31,25 @@ export const handler = async (event) => {
   try {
 
     // All info from listRestaurants
-   const all_restaurant = await listActiveRestaurants()
+    const all_restaurant = await listActiveRestaurants()
 
-   return{
+    return {
       statusCode: 200,
       restaurant: all_restaurant
-   }
+    }
 
   } catch (error) {
 
     return {
-     statusCode: 400,
-     body: JSON.stringify({
-       error: 'Something went wrong'
-     }),
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Something went wrong'
+      }),
     };
 
   } finally {
     // close DB connections
-    pool.end()     
+    pool.end()
   }
-  
+
 };
