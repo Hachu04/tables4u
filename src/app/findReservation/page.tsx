@@ -127,6 +127,7 @@ export default function FindReservationPage() {
                             onChange={handleInputChange}
                             className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
                             placeholder="Enter email"
+                            required
                         />
                     </div>
                     <div>
@@ -138,6 +139,7 @@ export default function FindReservationPage() {
                             onChange={handleInputChange}
                             className="w-full border border-gray-300 rounded py-2 px-4 focus:outline-none focus:ring focus:ring-blue-300"
                             placeholder="Enter confirmation code"
+                            required
                         />
                     </div>
                 </form>
