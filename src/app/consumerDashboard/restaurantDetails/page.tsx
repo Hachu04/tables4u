@@ -109,7 +109,13 @@ const RestaurantAvailability = () => {
                     setRestaurantDetails(parsedDetails as RestaurantDetails);
                     const date = parsedDetails.date || new Date().toISOString().slice(0, 10);
                     setCalendarDate(date);
-                    setSelectedTime(parsedDetails.time.includes(':') ? parsedDetails.time : `${parsedDetails.time}:00`);
+                    setSelectedTime(
+                        parsedDetails.time === "none"
+                            ? "none"
+                            : parsedDetails.time.includes(":")
+                            ? parsedDetails.time
+                            : `${parsedDetails.time}:00`
+                    );                    
                     fetchAvailability(parsedDetails.resId, parsedDetails.date, parsedDetails.time);
                 } else {
                     console.error('Invalid restaurant details format in localStorage');
@@ -187,6 +193,8 @@ const RestaurantAvailability = () => {
 
     const handleMakeReservation = async () => {
         try {
+            setReservationSuccess(null);
+            setReservationError(null);
             const response = await instance.post('/makeReservation', reservationData);
 
             if (response.data.statusCode === 400) {
@@ -251,6 +259,7 @@ const RestaurantAvailability = () => {
                     <button
                         onClick={() => {
                             if (restaurantDetails) {
+                                console.log(selectedTime);
                                 fetchAvailability(restaurantDetails.resId, calendarDate, selectedTime);
                             }
                         }}
