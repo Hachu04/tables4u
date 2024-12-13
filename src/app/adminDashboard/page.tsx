@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import LoadingSpinner from '../utils/LoadingSpinner';
 import Link from 'next/link';
@@ -10,16 +10,21 @@ const instance = axios.create({
 
 export default function AdminDashboard() {
   const [restaurants, setRestaurants] = useState<{ name: string; isActive: number }[]>([]);
-  const [reservations, setReservations] = useState<any[]>([]); // For reservations
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [report, setReport] = useState<{ name: string; utilization: string; availability: string }[]>([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showRestaurants, setShowRestaurants] = useState(false);
-  const [showReservations, setShowReservations] = useState(false); // For reservations
+  const [showReservations, setShowReservations] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Fetch data helper
   const fetchData = async (
     endpoint: string,
+    payload: object,
     onSuccess: (data: any) => void,
     toggleVisibility: () => void
   ) => {
@@ -35,7 +40,7 @@ export default function AdminDashboard() {
         return;
       }
 
-      const response = await instance.post(endpoint, { token });
+      const response = await instance.post(endpoint, { ...payload, token });
       onSuccess(response.data);
       toggleVisibility();
     } catch (err) {
@@ -49,10 +54,12 @@ export default function AdminDashboard() {
   const fetchRestaurantData = () => {
     fetchData(
       'adminListRestaurant',
+      {},
       (data) => setRestaurants(data.restaurant),
       () => {
         setShowRestaurants(true);
         setShowReservations(false);
+        setShowReport(false);
       }
     );
   };
@@ -61,13 +68,49 @@ export default function AdminDashboard() {
   const fetchReservationsData = () => {
     fetchData(
       'adminListReservation',
+      {},
       (data) => setReservations(data.reservation),
       () => {
         setShowReservations(true);
         setShowRestaurants(false);
+        setShowReport(false);
       }
     );
   };
+
+  // Fetch utilization report
+const fetchUtilizationReport = () => {
+  if (!startDate || !endDate) {
+    setError('Please provide both start and end dates.');
+    return;
+  }
+
+  fetchData(
+    'adminGenerateReport',
+    { startDate, endDate },
+    (data) => {
+      // Parse the 'body' field to get the report data
+      try {
+        const parsedBody = JSON.parse(data.body);
+        const activeRestaurants = parsedBody['active-restaurants'];
+        if (Array.isArray(activeRestaurants)) {
+          setReport(activeRestaurants);
+        } else {
+          setReport([]);
+          setError('Unexpected report data format.');
+        }
+      } catch (err) {
+        setReport([]);
+        setError('Failed to parse report data.');
+      }
+    },
+    () => {
+      setShowReport(true);
+      setShowRestaurants(false);
+      setShowReservations(false);
+    }
+  );
+};
 
   // Handle Axios errors
   const handleAxiosError = (err: unknown) => {
@@ -82,48 +125,6 @@ export default function AdminDashboard() {
       }
     } else {
       setError('An unexpected error occurred. Please try again.');
-    }
-  };
-
-  // Handle restaurant deletion
-  const handleDeleteRestaurant = async (name: string) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Authentication token missing. Please log in.');
-        setLoading(false);
-        return;
-      }
-
-      await instance.post('adminDeleteRestaurant', { name, token });
-      setSuccess('Restaurant deleted successfully.');
-      fetchRestaurantData(); // Refresh restaurant list
-    } catch (err) {
-      handleAxiosError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle reservation cancellation
-  const handleCancelReservation = async (rsvId: string) => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('Authentication token missing. Please log in.');
-        setLoading(false);
-        return;
-      }
-
-      await instance.post('adminCancelReservation', { rsvId, token });
-      setSuccess('Reservation cancelled successfully.');
-      fetchReservationsData(); // Refresh reservation list
-    } catch (err) {
-      handleAxiosError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -163,6 +164,33 @@ export default function AdminDashboard() {
         List Reservations
       </button>
 
+      {/* Utilization Report Inputs */}
+      <div className="mt-4">
+        <h2 className="text-lg font-semibold">Check Utilization & Availability</h2>
+        <div className="flex flex-col gap-2 mt-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="p-2 border border-gray-300 rounded"
+            placeholder="Start Date"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="p-2 border border-gray-300 rounded"
+            placeholder="End Date"
+          />
+        </div>
+        <button
+          onClick={fetchUtilizationReport}
+          className="w-full bg-purple-500 text-white py-3 rounded hover:bg-purple-600 transition mt-4"
+        >
+          Check Utilization
+        </button>
+      </div>
+
       {/* Loading spinner */}
       {loading && <LoadingSpinner />}
 
@@ -183,12 +211,6 @@ export default function AdminDashboard() {
                 >
                   {restaurant.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
-                <button
-                  className="bg-red-500 text-white py-1 px-2 ml-4 rounded hover:bg-red-600 transition"
-                  onClick={() => handleDeleteRestaurant(restaurant.name)}
-                >
-                  Delete Restaurant
-                </button>
               </li>
             ))}
           </ul>
@@ -203,17 +225,29 @@ export default function AdminDashboard() {
             {reservations.map((reservation, index) => (
               <li key={index} className="mb-2">
                 Reservation ID: {reservation.rsvId}, Email: {reservation.email}, Guests: {reservation.numGuest}, Time: {reservation.reservedTime}
-                <button
-                  className="bg-red-500 text-white py-1 px-2 ml-4 rounded hover:bg-red-600 transition"
-                  onClick={() => handleCancelReservation(reservation.rsvId)}
-                >
-                  Cancel Reservation
-                </button>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {/* Show utilization report after fetch */}
+      {showReport && (<> {report?.length > 0 ? (
+            <div className="mt-6">
+                <h2 className="text-xl font-semibold mb-4">Utilization Report:</h2>
+                <ul className="list-disc pl-5">
+                    {report.map((item, index) => (
+                        <li key={index} className="mb-2">
+                            {item.name}: Utilization - {item.utilization}, Availability - {item.availability}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        ) : (
+            <p className="text-gray-500 mt-4">No utilization report data available for the selected dates.</p>
+        )}
+    </>
+     )}
     </div>
   );
 }

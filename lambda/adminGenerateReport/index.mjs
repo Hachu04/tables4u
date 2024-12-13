@@ -30,7 +30,7 @@ export const handler = async (event) => {
     };
   }
 
-  try {
+  
     // Verify the token
     const { email, role } = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
@@ -40,6 +40,15 @@ export const handler = async (event) => {
         body: JSON.stringify({ error: "Not authorized" }),
       };
     }
+
+    if (role !== 'Admin') {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({
+            error: 'Incorrect role'
+          }),
+        };
+      }
 
     // Fetch data from the database
     const getRestaurants = () => {
@@ -69,6 +78,8 @@ export const handler = async (event) => {
         );
       });
     };
+
+    try {
 
     const restaurants = await getRestaurants();
     const reservations = await getReservations();
