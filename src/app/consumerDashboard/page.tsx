@@ -224,7 +224,9 @@ export default function consumerDashboard() {
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
                     {filteredRestaurants?.map((restaurant, index) => (
-                        <Link href='consumerDashboard/restaurantDetails'>
+                        <Link
+                            key={restaurant.resId}
+                            href='consumerDashboard/restaurantDetails'>
                             <div
                                 onClick={() => {
                                     localStorage.setItem(
