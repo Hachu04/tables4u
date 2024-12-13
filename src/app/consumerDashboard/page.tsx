@@ -10,10 +10,12 @@ const instance = axios.create({
 export default function consumerDashboard() {
 
     const [calendarDate, setCalendarDate] = useState('');
+    const [selectedTime, setSelectedTime] = useState('none');
+    const [nameToSearch, setNameToSearch] = useState('');
     const [restaurants, setRestaurants] = useState<{ resId: number, name: string, address: string, openingHour: number, closingHour: number }[]>([]);
+    const [filteredRestaurants, setFilteredRestaurants] = useState<{ resId: number, name: string, address: string, openingHour: number, closingHour: number }[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showRestaurants, setShowRestaurants] = useState(false);
     const [fetchRestaurantTrigger, setFetchRestaurantTrigger] = useState(true);
 
     // Automatically shows any active restaurants when consumers click on consumer dashboard from landing page
@@ -37,7 +39,6 @@ export default function consumerDashboard() {
             // Update webpage with the restaurant data
             console.log(response.data.body)
             setRestaurants(response.data.body);
-            setShowRestaurants(true);
 
         } catch (error) {
             // Check what type of error might get
@@ -74,6 +75,51 @@ export default function consumerDashboard() {
 
     }
 
+    const updateFiltered = async () => {
+        try {
+            let updatedFilteredRestaurants = [...restaurants]; // Start with all restaurants
+
+            // Filter by name if a search term is provided
+            if (nameToSearch) {
+                updatedFilteredRestaurants = updatedFilteredRestaurants.filter(restaurant =>
+                    restaurant.name.toLowerCase().includes(nameToSearch.toLowerCase())
+                );
+            }
+
+            // Filter by time if a time is selected
+            if (selectedTime !== 'none') {
+                const selectedHour = parseInt(selectedTime, 10);
+                updatedFilteredRestaurants = updatedFilteredRestaurants.filter(restaurant =>
+                    selectedHour >= restaurant.openingHour && selectedHour < restaurant.closingHour
+                );
+            }
+
+            // Filter by closed days if a calendar date is selected
+            if (calendarDate) {
+                const closedDaysResponse = await instance.post('/fetchClosedRes', { day: calendarDate });
+                const closedDaysData = JSON.parse(closedDaysResponse.data.body);
+
+                if (closedDaysData && closedDaysData.data) {
+                    const closedResIds = closedDaysData.data.map((day: { resId: any; }) => day.resId);
+                    updatedFilteredRestaurants = updatedFilteredRestaurants.filter(restaurant =>
+                        !closedResIds.includes(restaurant.resId)
+                    );
+                }
+
+            }
+
+            // Update the filtered restaurants state
+            setFilteredRestaurants(updatedFilteredRestaurants);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    useEffect(() => {
+        updateFiltered();
+        console.log('test')
+    }, [restaurants, nameToSearch, selectedTime, calendarDate]);
+
     const handleListRestaurant = () => {
         setFetchRestaurantTrigger(true);
     }
@@ -106,7 +152,8 @@ export default function consumerDashboard() {
                         <input
                             id="name"
                             type="text"
-
+                            value={nameToSearch}
+                            onChange={(e) => setNameToSearch(e.target.value)}
                             className="input-field border-2 border-gray-300 rounded px-3 py-2"
                             required
                         />
@@ -123,7 +170,10 @@ export default function consumerDashboard() {
                     </div>
                     <div className="flex flex-col mb-4">
                         <label htmlFor="time" className="text-lg font-semibold">Time</label>
-                        <select className="border-2 border-gray-300 rounded px-3 py-3">
+                        <select
+                            className="border-2 border-gray-300 rounded px-3 py-3"
+                            value={selectedTime}
+                            onChange={(e) => setSelectedTime(e.target.value)}>
                             <option value="none">No Time Preference</option>
                             <option value="00">12:00 AM</option>
                             <option value="01">1:00 AM</option>
@@ -149,6 +199,7 @@ export default function consumerDashboard() {
                             <option value="21">9:00 PM</option>
                             <option value="22">10:00 PM</option>
                             <option value="23">11:00 PM</option>
+
                         </select>
                     </div>
                 </div>
@@ -169,10 +220,10 @@ export default function consumerDashboard() {
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
 
-            {showRestaurants && restaurants && restaurants.length > 0 ? (
+            {filteredRestaurants && filteredRestaurants.length > 0 ? (
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
-                    {restaurants?.map((restaurant, index) => (
+                    {filteredRestaurants?.map((restaurant, index) => (
                         <Link href={`/consumerDashboard/${restaurant.resId}`} key={index}>
                             <div className="cursor-pointer border-2 border-gray-300 rounded-lg p-4 hover:bg-gray-100">
                                 <h3 className="text-xl font-semibold">{restaurant.name}</h3>
