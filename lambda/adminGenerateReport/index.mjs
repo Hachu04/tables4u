@@ -11,7 +11,6 @@ export const handler = async (event) => {
 
   const { startDate, endDate, token } = event;
 
-  // Validate input
   if (!startDate || !endDate || !token) {
     return {
       statusCode: 400,
@@ -30,27 +29,16 @@ export const handler = async (event) => {
     };
   }
 
-  
-    // Verify the token
+  try {
     const { email, role } = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    if (!email || !role) {
+    if (!email || role !== 'Admin') {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: "Not authorized" }),
       };
     }
 
-    if (role !== 'Admin') {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({
-            error: 'Incorrect role'
-          }),
-        };
-      }
-
-    // Fetch data from the database
     const getRestaurants = () => {
       return new Promise((resolve, reject) => {
         pool.query(
@@ -66,9 +54,8 @@ export const handler = async (event) => {
     const getReservations = () => {
       return new Promise((resolve, reject) => {
         pool.query(
-          `SELECT Reservation.resId, Reservation.tableNum, ResTable.numSeats, Reservation.reservedTime
+          `SELECT Reservation.resId, Reservation.tableNum, Reservation.reservedTime
            FROM Reservation
-           JOIN ResTable ON Reservation.tableNum = ResTable.tableNum
            WHERE DATE(Reservation.reservedTime) BETWEEN ? AND ?`,
           [startDate, endDate],
           (error, results) => {
@@ -78,8 +65,6 @@ export const handler = async (event) => {
         );
       });
     };
-
-    try {
 
     const restaurants = await getRestaurants();
     const reservations = await getReservations();
@@ -93,47 +78,36 @@ export const handler = async (event) => {
             (error, tables) => {
               if (error) return reject(error);
 
-              const reservedData = tables.map((table) => {
+              let totalCapacity = 0;
+              let totalReservedSeats = 0;
+
+              tables.forEach((table) => {
+                totalCapacity += table.numSeats;
+
                 const matchingReservations = reservations.filter(
                   (res) =>
                     res.resId === restaurant.resId &&
                     res.tableNum === table.tableNum
                 );
 
-                const totalReservedSeats = matchingReservations.reduce(
-                  (sum, res) => sum + table.numSeats,
-                  0
-                );
-
-                return {
-                  tableNum: table.tableNum,
-                  totalReservedSeats,
-                  availableSeats: table.numSeats - totalReservedSeats,
-                };
+                totalReservedSeats += matchingReservations.length * table.numSeats;
               });
 
-              const totalCapacity = tables.reduce(
-                (sum, table) => sum + table.numSeats,
-                0
-              );
-              const totalReserved = reservedData.reduce(
-                (sum, data) => sum + data.totalReservedSeats,
-                0
-              );
-
+              // Calculate utilization and availability
               const utilization =
                 totalCapacity > 0
-                  ? ((totalReserved / totalCapacity) * 100).toFixed(2) + "%"
-                  : "0%";
+                  ? ((totalReservedSeats / totalCapacity) * 100).toFixed(2)
+                  : "0.00";
+
               const availability =
                 totalCapacity > 0
-                  ? (((totalCapacity - totalReserved) / totalCapacity) * 100).toFixed(2) + "%"
-                  : "0%";
+                  ? (((totalCapacity - totalReservedSeats) / totalCapacity) * 100).toFixed(2)
+                  : "0.00";
 
               resolve({
                 name: restaurant.name,
-                utilization,
-                availability,
+                utilization: `${utilization}%`,
+                availability: `${availability}%`,
               });
             }
           );
@@ -141,7 +115,7 @@ export const handler = async (event) => {
       })
     );
 
-    pool.end(); // Ensure the pool is closed
+    pool.end();
     return {
       statusCode: 200,
       body: JSON.stringify({ "active-restaurants": report }),
