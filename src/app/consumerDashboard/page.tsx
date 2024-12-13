@@ -224,8 +224,22 @@ export default function consumerDashboard() {
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-4">Restaurants:</h2>
                     {filteredRestaurants?.map((restaurant, index) => (
-                        <Link href={`/consumerDashboard/${restaurant.resId}`} key={index}>
-                            <div className="cursor-pointer border-2 border-gray-300 rounded-lg p-4 hover:bg-gray-100">
+                        <Link href='consumerDashboard/restaurantDetails'>
+                            <div
+                                onClick={() => {
+                                    localStorage.setItem(
+                                        'restaurantDetails',
+                                        JSON.stringify({
+                                            resId: restaurant.resId,
+                                            name: restaurant.name,
+                                            openingHour: restaurant.openingHour,
+                                            closingHour: restaurant.closingHour,
+                                            date: calendarDate,
+                                            time: selectedTime
+                                        })
+                                    );
+                                }}
+                                className="cursor-pointer border-2 border-gray-300 rounded-lg p-4 hover:bg-gray-100">
                                 <h3 className="text-xl font-semibold">{restaurant.name}</h3>
                                 <p className="text-gray-600">{restaurant.address}</p>
                                 <p className="text-gray-600">{convertTo12HourFormat(restaurant.openingHour)} - {convertTo12HourFormat(restaurant.closingHour)}</p>
