@@ -17,6 +17,19 @@ export default function consumerDashboard() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fetchRestaurantTrigger, setFetchRestaurantTrigger] = useState(true);
+    const [minDate, setMinDate] = useState('');
+
+    useEffect(() => {
+        // Set minimum date to today
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        setMinDate(formattedDate);
+        
+        // If there's a currently selected date that's in the past, update it to today
+        if (calendarDate && calendarDate < formattedDate) {
+            setCalendarDate(formattedDate);
+        }
+    }, []);
 
     // Automatically shows any active restaurants when consumers click on consumer dashboard from landing page
     useEffect(() => {
@@ -155,7 +168,6 @@ export default function consumerDashboard() {
                             value={nameToSearch}
                             onChange={(e) => setNameToSearch(e.target.value)}
                             className="input-field border-2 border-gray-300 rounded px-3 py-2"
-                            required
                         />
                     </div>
                     <div className="flex flex-col mb-4">
@@ -164,6 +176,7 @@ export default function consumerDashboard() {
                             id="date"
                             type="date"
                             value={calendarDate}
+                            min={minDate}
                             onChange={(e) => setCalendarDate(e.target.value)}
                             className="input-field border-2 border-gray-300 rounded px-3 py-2"
                         />

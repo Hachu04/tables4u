@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import LoadingSpinner from '../../utils/LoadingSpinner';
@@ -11,11 +11,25 @@ const instance = axios.create({
 
 export default function EditFutureDayPage() {
     const [calendarDate, setCalendarDate] = useState('');
+    const [minDate, setMinDate] = useState('');
     const [responseMsg, setResponseMsg] = useState('')
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     const [redraw, forceRedraw] = React.useState(0);
+
+    useEffect(() => {
+        // Set minimum date to tomorrow (since this is for future days)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const formattedDate = tomorrow.toISOString().split('T')[0];
+        setMinDate(formattedDate);
+        
+        // If there's a currently selected date that's in the past or today, update it to tomorrow
+        if (calendarDate && calendarDate <= new Date().toISOString().split('T')[0]) {
+            setCalendarDate(formattedDate);
+        }
+    }, []);
 
     const andRefreshDisplay = () => {
         forceRedraw(redraw + 1)
@@ -129,6 +143,7 @@ export default function EditFutureDayPage() {
                     id="date"
                     type="date"
                     value={calendarDate}
+                    min={minDate}
                     onChange={(e) => setCalendarDate(e.target.value)}
                     className="input-field border-2 border-gray-300 rounded px-3 py-2"
                 />

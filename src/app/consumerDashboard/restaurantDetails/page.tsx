@@ -68,6 +68,19 @@ const RestaurantAvailability = () => {
     });
     const [reservationError, setReservationError] = useState<string | null>(null);
     const [reservationSuccess, setReservationSuccess] = useState<ReservationResponse | null>(null);
+    const [minDate, setMinDate] = useState('');
+
+    useEffect(() => {
+        // Set minimum date to today
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        setMinDate(formattedDate);
+
+        // If there's a currently selected date that's in the past, update it to today
+        if (calendarDate && calendarDate < formattedDate) {
+            setCalendarDate(formattedDate);
+        }
+    }, []);
 
     const fetchAvailability = async (resId: string, date?: string, time?: string) => {
         try {
@@ -113,9 +126,9 @@ const RestaurantAvailability = () => {
                         parsedDetails.time === "none"
                             ? "none"
                             : parsedDetails.time.includes(":")
-                            ? parsedDetails.time
-                            : `${parsedDetails.time}:00`
-                    );                    
+                                ? parsedDetails.time
+                                : `${parsedDetails.time}:00`
+                    );
                     fetchAvailability(parsedDetails.resId, parsedDetails.date, parsedDetails.time);
                 } else {
                     console.error('Invalid restaurant details format in localStorage');
@@ -205,7 +218,7 @@ const RestaurantAvailability = () => {
             if (response.data.statusCode === 200) {
                 const reservationDetails: ReservationResponse = JSON.parse(response.data.body);
                 setReservationSuccess(reservationDetails);
-                
+
                 if (restaurantDetails) {
                     fetchAvailability(restaurantDetails.resId, calendarDate, selectedTime);
                 }
@@ -238,6 +251,7 @@ const RestaurantAvailability = () => {
                             id="date"
                             type="date"
                             value={calendarDate}
+                            min={minDate}
                             onChange={(e) => setCalendarDate(e.target.value)}
                             className="input-field border-2 border-gray-300 rounded px-3 py-2"
                         />
