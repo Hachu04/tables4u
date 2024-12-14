@@ -64,6 +64,25 @@ export const handler = async (event) => {
     });
   };
 
+  // Function to check if the restaurant has at least one table
+  let CheckTablesExist = (resId) => {
+    return new Promise((resolve, reject) => {
+      pool.query(
+        `SELECT COUNT(*) as tableCount FROM ResTable WHERE resId = ?;`,
+        [resId],
+        (error, rows) => {
+          if (error) {
+            return reject(error);
+          }
+          if (rows[0].tableCount === 0) {
+            return reject(new Error('No tables found for the restaurant. Please add at least one table before activating'));
+          }
+          return resolve();
+        }
+      );
+    });
+  };
+
   // Function to activate restaurant
   let Activate = (resId) => {
     return new Promise((resolve, reject) => {
@@ -89,6 +108,7 @@ export const handler = async (event) => {
   let response;
   try {
     const resId = await GetResId(email);
+    await CheckTablesExist(resId);
     await Activate(resId);
 
     // Return success response
@@ -105,8 +125,7 @@ export const handler = async (event) => {
     response = {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'An error occurred while activating restaurant',
-        details: error.message,
+        error: error.message
       }),
     };
   }
