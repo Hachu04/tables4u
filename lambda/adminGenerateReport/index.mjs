@@ -42,7 +42,7 @@ export const handler = async (event) => {
     const getRestaurants = () => {
       return new Promise((resolve, reject) => {
         pool.query(
-          "SELECT resId, name FROM Restaurant WHERE isActive = 1",
+          "SELECT resId, name, openingHour, closingHour FROM Restaurant WHERE isActive = 1",
           (error, results) => {
             if (error) return reject(error);
             resolve(results);
@@ -54,7 +54,7 @@ export const handler = async (event) => {
     const getReservations = () => {
       return new Promise((resolve, reject) => {
         pool.query(
-          `SELECT Reservation.resId, Reservation.tableNum, Reservation.reservedTime
+          `SELECT Reservation.resId, Reservation.tableNum, Reservation.reservedTime, Reservation.numGuests
            FROM Reservation
            WHERE DATE(Reservation.reservedTime) BETWEEN ? AND ?`,
           [startDate, endDate],
@@ -66,8 +66,22 @@ export const handler = async (event) => {
       });
     };
 
-    const restaurants = await getRestaurants();
+    const getReportPeriod = (startDate, endDate) => {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const differenceInMilliseconds = end - start;
+      // Convert difference to seconds, minutes, hours, and days
+      const diffInSeconds = Math.floor(differenceInMilliseconds / 1000);
+      const diffInMinutes = Math.floor(diffInSeconds / 60);
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+      return diffInDays;
+    }
+
+    const restaurants = await getRestaurants(); 
     const reservations = await getReservations();
+    const reportPeriod = await getReportPeriod(startDate, endDate);
+    console.log(reportPeriod);
 
     const report = await Promise.all(
       restaurants.map(async (restaurant) => {
@@ -80,6 +94,9 @@ export const handler = async (event) => {
 
               let totalCapacity = 0;
               let totalReservedSeats = 0;
+              let totalTables = tables.length * (restaurant.closingHour - restaurant.openingHour) * reportPeriod;
+              let totalReservations = 0;
+              console.log(totalTables);
 
               tables.forEach((table) => {
                 totalCapacity += table.numSeats;
@@ -90,18 +107,23 @@ export const handler = async (event) => {
                     res.tableNum === table.tableNum
                 );
 
-                totalReservedSeats += matchingReservations.length * table.numSeats;
+                matchingReservations.forEach((reservation) => {
+                  totalReservedSeats += reservation.numGuests;
+                  totalReservations += 1;
+                });
+
               });
+
 
               // Calculate utilization and availability
               const utilization =
-                totalCapacity > 0
+                totalCapacity > 0 && totalReservedSeats > 0
                   ? ((totalReservedSeats / totalCapacity) * 100).toFixed(2)
                   : "0.00";
 
               const availability =
-                totalCapacity > 0
-                  ? (((totalCapacity - totalReservedSeats) / totalCapacity) * 100).toFixed(2)
+                totalTables > 0 && totalReservations > 0 && totalReservations < totalTables
+                  ? (( (totalTables - totalReservations) / totalTables) * 100).toFixed(2)
                   : "0.00";
 
               resolve({
